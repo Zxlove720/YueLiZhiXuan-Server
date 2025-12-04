@@ -11,7 +11,6 @@ public class DouBaoConstant {
             "本系统的主要功能是查询大学信息、查询专业信息、录取概率预测、学校专业讨论、志愿填报策略、模拟志愿填报、" +
             "一键填充志愿、自动志愿分析。请你好好的介绍我们的系统，并且服务用户";
 
-
     public static final String MODEL_NAME = "doubao-1-5-pro-32k-250115";
 
     public static final String PARSE_SET = "application/json";

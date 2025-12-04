@@ -19,6 +19,6 @@ public class MajorAIRequestDTO {
     private MajorAIMessageVO message;
 
     @Schema(description = "模型温度")
-    private Double temperature;
+    private Double temperature = 0.3;
 
 }

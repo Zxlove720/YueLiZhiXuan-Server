@@ -92,7 +92,9 @@ public class DouBaoServiceImpl implements DouBaoService {
         requestBody.put("model", DouBaoConstant.MODEL_NAME);
         // 4.2封装消息
         requestBody.put("messages", messages);
-        // 4.3不开启流式输出
+        // 4.3设置模型温度
+        requestBody.put("temperature", 0.3);
+        // 4.4不开启流式输出
         requestBody.put("stream", false);
         // 5.设置请求客户端
         OkHttpClient client = new OkHttpClient.Builder()
@@ -225,7 +227,7 @@ public class DouBaoServiceImpl implements DouBaoService {
         // 1.获取需要请求的学校名
         String schoolName = schoolMapper.selectBySchoolId(schoolAIRequestDTO.getSchoolId()).getSchoolName();
         // 2.封装问题
-        String question = "请为我介绍" + schoolName;
+        String question = "请为我介绍" + schoolName + "的详细信息";
         Request request = buildRequest(question);
         // 3.发起请求并获取回答
         String answer = executeRequest(request);
@@ -290,6 +292,7 @@ public class DouBaoServiceImpl implements DouBaoService {
         JSONObject requestBody = new JSONObject();
         requestBody.put("model", DouBaoConstant.MODEL_NAME);
         requestBody.put("messages", message);
+        requestBody.put("temperature", 0.3);
         requestBody.put("stream", false);
         // 3.构建新的请求，请求DeepSeekAPI
         return new Request.Builder()
