@@ -29,6 +29,23 @@ spring:
           min-idle: ${college.data.redis.lettuce.pool.min-idle}
           time-between-eviction-runs: ${college.data.redis.lettuce.pool.time-between-eviction-runs}
 
+  # 配置SpringAI
+  ai:
+    # 深度思考版本deepseek
+    openai:
+      base-url: https://api.deepseek.com
+      api-key: ${OPENAI_API_KEY}
+      chat:
+        options:
+          model: deepseek-reasoner
+    # 不思考版本deepseek
+    deepseek:
+      base-url: https://api.deepseek.com
+      api-key: ${DEEPSEEK_API_KEY}
+      chat:
+        options:
+          model: deepseek-chat
+
 # 设置mybatis
 mybatis:
   mapper-locations: classpath:mapper/*.xml
