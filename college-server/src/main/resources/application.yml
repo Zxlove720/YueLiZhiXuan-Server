@@ -34,14 +34,14 @@ spring:
     # 豆包API
     openai:
       base-url: https://ark.cn-beijing.volces.com/api/v3
-      api-key: 84164e80-a90b-4e7d-a65f-d7966b3cfc77
+      api-key:
       chat:
         options:
           model: doubao-seed-2-0-lite-260215
     # 不思考版本deepseek
     deepseek:
       base-url: https://api.deepseek.com
-      api-key: sk-0419685955a64200b3fedb7b13479b9d
+      api-key:
       chat:
         options:
           model: deepseek-reasoner
