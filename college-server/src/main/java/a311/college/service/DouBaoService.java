@@ -4,9 +4,12 @@ import a311.college.dto.ai.MajorAIRequestDTO;
 import a311.college.dto.ai.SchoolAIRequestDTO;
 import a311.college.dto.ai.UserAIRequestDTO;
 import a311.college.dto.volunteer.AnalyseDTO;
+import a311.college.entity.agent.ChatRecord;
 import a311.college.vo.ai.MajorAIMessageVO;
 import a311.college.vo.ai.SchoolAIMessageVO;
 import a311.college.vo.ai.UserAIMessageVO;
+
+import java.util.List;
 
 public interface DouBaoService {
 
@@ -17,4 +20,9 @@ public interface DouBaoService {
     MajorAIMessageVO majorInformation(MajorAIRequestDTO majorAIRequestDTO);
 
     UserAIMessageVO analyseVolunteerTable(AnalyseDTO analyseDTO);
+
+    void saveRecord(ChatRecord record);
+
+    List<ChatRecord> getChatRecord(Long userId);
+
 }

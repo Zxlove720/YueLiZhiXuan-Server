@@ -7,8 +7,10 @@ import a311.college.dto.ai.MajorAIRequestDTO;
 import a311.college.dto.ai.SchoolAIRequestDTO;
 import a311.college.dto.ai.UserAIRequestDTO;
 import a311.college.dto.volunteer.AnalyseDTO;
+import a311.college.entity.agent.ChatRecord;
 import a311.college.entity.volunteer.Volunteer;
 import a311.college.exception.DouBaoAPIErrorException;
+import a311.college.mapper.agent.ChatRecordMapper;
 import a311.college.mapper.major.MajorMapper;
 import a311.college.mapper.school.SchoolMapper;
 import a311.college.mapper.volunteer.VolunteerMapper;
@@ -48,12 +50,15 @@ public class DouBaoServiceImpl implements DouBaoService {
 
     private final VolunteerMapper volunteerMapper;
 
+    private final ChatRecordMapper chatRecordMapper;
+
     public DouBaoServiceImpl(RedisTemplate<String, Object> redisTemplate, SchoolMapper schoolMapper,
-                             MajorMapper majorMapper, VolunteerMapper volunteerMapper) {
+                             MajorMapper majorMapper, VolunteerMapper volunteerMapper, ChatRecordMapper chatRecordMapper) {
         this.redisTemplate = redisTemplate;
         this.schoolMapper = schoolMapper;
         this.majorMapper = majorMapper;
         this.volunteerMapper = volunteerMapper;
+        this.chatRecordMapper = chatRecordMapper;
     }
 
     /**
@@ -337,6 +342,21 @@ public class DouBaoServiceImpl implements DouBaoService {
             log.info(DouBaoConstant.REQUEST_ERROR_CONSTANT);
             throw new DouBaoAPIErrorException(DouBaoConstant.REQUEST_ERROR_CONSTANT);
         }
+    }
+
+    /**
+     * 保存会话记录
+     *
+     * @param record 会话记录
+     */
+    @Override
+    public void saveRecord(ChatRecord record) {
+        chatRecordMapper.saveRecord(record);
+    }
+
+    @Override
+    public List<ChatRecord> getChatRecord(Long userId) {
+        return chatRecordMapper.findRecordByUserId(userId);
     }
 
 }

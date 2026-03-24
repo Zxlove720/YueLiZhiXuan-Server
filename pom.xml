@@ -22,6 +22,9 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>17</java.version>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
+        <maven.compiler.release>17</maven.compiler.release>
         <lombok.version>1.18.30</lombok.version>
         <mybatis.spring.boot.starter.version>3.0.4</mybatis.spring.boot.starter.version>
         <mybatis.plus.version>3.5.6</mybatis.plus.version>
@@ -50,6 +53,15 @@
 
     <dependencyManagement>
         <dependencies>
+            <!-- Spring AI BOM 必须以 type=pom, scope=import 方式导入，放在最前面 -->
+            <dependency>
+                <groupId>org.springframework.ai</groupId>
+                <artifactId>spring-ai-bom</artifactId>
+                <version>${spring-ai.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
             <dependency>
                 <groupId>org.mybatis.spring.boot</groupId>
                 <artifactId>mybatis-spring-boot-starter</artifactId>
@@ -154,19 +166,6 @@
                 <artifactId>commonmark</artifactId>
                 <version>${commonmark.version}</version>
             </dependency>
-
-            <dependency>
-                <groupId>org.springframework.ai</groupId>
-                <artifactId>spring-ai-bom</artifactId>
-                <version>${spring-ai.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.springframework.ai</groupId>
-                <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
-            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -177,6 +176,8 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <configuration>
+                        <source>17</source>
+                        <target>17</target>
                         <annotationProcessorPaths>
                             <path>
                                 <groupId>org.projectlombok</groupId>

@@ -31,20 +31,20 @@ spring:
 
   # 配置SpringAI
   ai:
-    # 深度思考版本deepseek
+    # 豆包API
     openai:
-      base-url: https://api.deepseek.com
-      api-key: ${OPENAI_API_KEY}
+      base-url: https://ark.cn-beijing.volces.com/api/v3
+      api-key: 84164e80-a90b-4e7d-a65f-d7966b3cfc77
       chat:
         options:
-          model: deepseek-reasoner
+          model: doubao-seed-2-0-lite-260215
     # 不思考版本deepseek
     deepseek:
       base-url: https://api.deepseek.com
-      api-key: ${DEEPSEEK_API_KEY}
+      api-key: sk-0419685955a64200b3fedb7b13479b9d
       chat:
         options:
-          model: deepseek-chat
+          model: deepseek-reasoner
 
 # 设置mybatis
 mybatis:
@@ -74,6 +74,8 @@ logging:
         server: info
         mapper: debug
         controller: info
+    org.springframework.ai: debug # AI对话的日志级别
+    com.itheima.ai: debug # 本项目的日志级别
 
 # 设置knife4j
 knife4j:
