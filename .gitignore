@@ -28,4 +28,4 @@ target/
 test/
 
 application-dev.yml
-*.yml
+application.yml
