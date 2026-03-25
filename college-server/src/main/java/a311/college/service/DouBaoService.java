@@ -23,6 +23,8 @@ public interface DouBaoService {
 
     void saveRecord(ChatRecord record);
 
-    List<ChatRecord> getChatRecord(Long userId);
+    List<ChatRecord> getUserChatRecordList(Long userId);
+
+    ChatRecord getChatRecordDetail(String conversationId);
 
 }

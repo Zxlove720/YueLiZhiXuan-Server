@@ -355,8 +355,13 @@ public class DouBaoServiceImpl implements DouBaoService {
     }
 
     @Override
-    public List<ChatRecord> getChatRecord(Long userId) {
+    public List<ChatRecord> getUserChatRecordList(Long userId) {
         return chatRecordMapper.findRecordByUserId(userId);
+    }
+
+
+    public ChatRecord getChatRecordDetail(String conversationId) {
+        return chatRecordMapper.findRecordByConversationId(conversationId);
     }
 
 }

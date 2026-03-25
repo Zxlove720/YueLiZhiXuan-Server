@@ -1,22 +1,25 @@
 package a311.college.controller.doubao;
 
+import a311.college.config.agent.AgentMessageVO;
 import a311.college.dto.ai.UserAIRequestDTO;
 import a311.college.entity.agent.ChatRecord;
 import a311.college.result.Result;
 import a311.college.service.DouBaoService;
 import a311.college.thread.ThreadLocalUtil;
 import a311.college.vo.ai.UserAIMessageVO;
-import cn.hutool.core.lang.UUID;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.deepseek.DeepSeekAssistantMessage;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 
+import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -29,10 +32,14 @@ public class DouBaoController {
 
     private final DouBaoService douBaoService;
 
+    private final ChatMemoryRepository chatMemoryRepository;
+
     @Autowired
-    public DouBaoController(DouBaoService douBaoService, ChatClient chatClient) {
+    public DouBaoController(DouBaoService douBaoService, ChatClient chatClient,
+                            @Qualifier(value = "jdbcChatMemoryRepository") ChatMemoryRepository chatMemoryRepository) {
         this.douBaoService = douBaoService;
         this.chatClient = chatClient;
+        this.chatMemoryRepository = chatMemoryRepository;
     }
 
     /**
@@ -71,7 +78,7 @@ public class DouBaoController {
      * @return Result<Flux<String>> 大模型生成结果
      */
     @RequestMapping("/chat")
-    public Flux<String> chat(@RequestParam(defaultValue = "你好") String prompt) {
+    public Flux<String> chat(@RequestParam(defaultValue = "你好") String prompt, @RequestParam @NotNull String chatId) {
         log.info("进入chat Stream方法");
 //        // 常规使用 非深度思考
 //        return chatClient
@@ -84,16 +91,20 @@ public class DouBaoController {
 
         // DeepSeek深度思考特殊处理
         // 常规模型返回的是AssistantMessage类型，但是DeepSeek返回的是DeepSeekAssistantMessage类型，而思考内容在reasoning_content中，需要特殊处理
-
-        // 保存会话记录
-        ChatRecord chatRecord = new ChatRecord();
         Long userId = ThreadLocalUtil.getCurrentId();
-        String conversationId = UUID.randomUUID().toString() + userId;
-        chatRecord.setConversationId(conversationId);
-        chatRecord.setUserId(userId);
-        chatRecord.setTitle(userId + "对话");
-        chatRecord.setCreateTime(LocalDateTime.now());
-        douBaoService.saveRecord(chatRecord);
+        String conversationId = chatId + "-" + userId;
+        ChatRecord chatRecordDetail = douBaoService.getChatRecordDetail(conversationId);
+        if (chatRecordDetail == null) {
+            log.info("conversationId：{}在数据库中不存在，需要创建会话记录", conversationId);
+            // 构造会话记录
+            ChatRecord chatRecord = new ChatRecord();
+            chatRecord.setConversationId(conversationId);
+            chatRecord.setUserId(userId);
+            chatRecord.setTitle(userId + "对话");
+            chatRecord.setCreateTime(LocalDateTime.now());
+            // 保存会话记录
+            douBaoService.saveRecord(chatRecord);
+        }
         return chatClient
                 .prompt(prompt)
                 // ChatMemory是根据conversationId来区分不同会话的，所以说为了区分不同对话，需要在发送请求的时候携带会话id
@@ -102,7 +113,6 @@ public class DouBaoController {
                 .stream()
                 .chatResponse()
                 .mapNotNull(this::handlerReasoningContent);
-
     }
 
     /**
@@ -130,7 +140,18 @@ public class DouBaoController {
      */
     @GetMapping("/record")
     public Result<List<ChatRecord>> getChatRecord() {
-        return Result.success(douBaoService.getChatRecord(ThreadLocalUtil.getCurrentId()));
+        return Result.success(douBaoService.getUserChatRecordList(ThreadLocalUtil.getCurrentId()));
+    }
+
+    /**
+     * 获取对话历史
+     *
+     * @param chatId 对话id
+     * @return Result<List<AgentMessageVO>>
+     */
+    @GetMapping("/{chatId}")
+    public Result<List<AgentMessageVO>> getChatHistory(@PathVariable String chatId) {
+        return Result.success(chatMemoryRepository .findByConversationId(chatId).stream().map(AgentMessageVO::new).toList());
     }
 
 }
