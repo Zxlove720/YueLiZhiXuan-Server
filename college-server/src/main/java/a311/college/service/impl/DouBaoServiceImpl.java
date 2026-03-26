@@ -257,7 +257,7 @@ public class DouBaoServiceImpl implements DouBaoService {
         // 2.封装提示词
         String prompt = "请为我介绍" + schoolName + "的详细信息";
         // 3.发起请求并获取回答
-        String answer = agentUtil.simpleChat(prompt);
+        String answer = agentUtil.chatForInformation(prompt);
         return new AgentMessageVO(DouBaoConstant.ROLE_ASSISTANT, markDown2HTML(StringEscapeUtils.escapeHtml4(answer)));
     }
 
@@ -293,9 +293,30 @@ public class DouBaoServiceImpl implements DouBaoService {
         // 2.封装提示词
         String prompt = "请为我介绍" + majorName + "这个专业的详细信息";
         // 3.发起请求并获取回答
-        String answer = agentUtil.chat(prompt);
+        String answer = agentUtil.chatForInformation(prompt);
         return new AgentMessageVO(DouBaoConstant.ROLE_ASSISTANT, markDown2HTML(StringEscapeUtils.escapeHtml4(answer)));
     }
+
+//    /**
+//     * 分析用户志愿表
+//     *
+//     * @param analyseDTO 分析志愿表DTO
+//     * @return UserAIMessageVO
+//     */
+//    @Override
+//    public UserAIMessageVO analyseVolunteerTable(AnalyseDTO analyseDTO) {
+//        // 1.获取用户志愿表
+//        List<Volunteer> volunteerList = volunteerMapper.selectVolunteers(analyseDTO.getTableId());
+//        // 2.封装请求问题
+//        String question = "我是" + analyseDTO.getYear() + "年参加高考的" + analyseDTO.getProvince() + "考生，我的高考成绩是" +
+//                analyseDTO.getGrade() + "我的高考位次是" + analyseDTO.getRanking() + "这是我模拟填报的志愿表：\n" +
+//                volunteerList.toString() + "\n请为我分析是否合理，并提出一些建议";
+//        Request request = buildRequest(question);
+//        // 3.发起请求并获取回答
+//        String answer = executeRequest(request);
+//        log.info(DouBaoConstant.ROLE_ASSISTANT + "{}", answer);
+//        return new UserAIMessageVO(DouBaoConstant.ROLE_ASSISTANT, markDown2HTML(StringEscapeUtils.escapeHtml4(answer)));
+//    }
 
     /**
      * 分析用户志愿表
@@ -304,18 +325,17 @@ public class DouBaoServiceImpl implements DouBaoService {
      * @return UserAIMessageVO
      */
     @Override
-    public UserAIMessageVO analyseVolunteerTable(AnalyseDTO analyseDTO) {
+    public AgentMessageVO analyseVolunteerTable(AnalyseDTO analyseDTO) {
         // 1.获取用户志愿表
         List<Volunteer> volunteerList = volunteerMapper.selectVolunteers(analyseDTO.getTableId());
-        // 2.封装请求问题
-        String question = "我是" + analyseDTO.getYear() + "年参加高考的" + analyseDTO.getProvince() + "考生，我的高考成绩是" +
+        // 2.封装提示词
+        String prompt = "我是" + analyseDTO.getYear() + "年参加高考的" + analyseDTO.getProvince() + "考生，我的高考成绩是" +
                 analyseDTO.getGrade() + "我的高考位次是" + analyseDTO.getRanking() + "这是我模拟填报的志愿表：\n" +
                 volunteerList.toString() + "\n请为我分析是否合理，并提出一些建议";
-        Request request = buildRequest(question);
         // 3.发起请求并获取回答
-        String answer = executeRequest(request);
+        String answer = agentUtil.chatForInformation(prompt);
         log.info(DouBaoConstant.ROLE_ASSISTANT + "{}", answer);
-        return new UserAIMessageVO(DouBaoConstant.ROLE_ASSISTANT, markDown2HTML(StringEscapeUtils.escapeHtml4(answer)));
+        return new AgentMessageVO(DouBaoConstant.ROLE_ASSISTANT, markDown2HTML(StringEscapeUtils.escapeHtml4(answer)));
     }
 
     /**

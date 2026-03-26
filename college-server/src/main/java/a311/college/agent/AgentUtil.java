@@ -10,14 +10,15 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 
 import javax.validation.constraints.NotNull;
-import java.util.UUID;
 
 @Slf4j
 @Component
 public class AgentUtil {
 
+    // 带对话记忆的chatClient，主要用于用户和agent交互
     private final ChatClient chatClient;
 
+    // 没有对话记忆的chatClient，主要用于请求大模型获取大学、专业的信息
     private final ChatClient simpleChatClient;
 
     public AgentUtil(ChatClient chatClient, @Qualifier(value = "simpleChatClient") ChatClient simpleChatClient) {
@@ -25,20 +26,15 @@ public class AgentUtil {
         this.simpleChatClient = simpleChatClient;
     }
 
-    public String chat(String prompt) {
-        return chatClient
-                .prompt(prompt)
-                .advisors(advisorSpec -> advisorSpec
-                        .param(ChatMemory.CONVERSATION_ID, UUID.randomUUID().toString()))
-                .call()
-                .content();
-    }
-
-    public String simpleChat(String prompt) {
+    /**
+     * 请求大模型获取信息
+     *
+     * @param prompt 提示词
+     * @return 大模型返回的信息
+     */
+    public String chatForInformation(String prompt) {
         return simpleChatClient
                 .prompt(prompt)
-                .advisors(advisorSpec -> advisorSpec
-                        .param(ChatMemory.CONVERSATION_ID, UUID.randomUUID().toString()))
                 .call()
                 .content();
     }

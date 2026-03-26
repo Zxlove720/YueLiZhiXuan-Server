@@ -1,5 +1,6 @@
 package a311.college.service;
 
+import a311.college.agent.AgentMessageVO;
 import a311.college.dto.user.VolunteerPageDTO;
 import a311.college.dto.volunteer.AddVolunteerDTO;
 import a311.college.dto.volunteer.AnalyseDTO;
@@ -33,6 +34,6 @@ public interface VolunteerService {
 
     List<Volunteer> selectVolunteer(int tableId);
 
-    UserAIMessageVO analyseVolunteerTable(AnalyseDTO analyseDTO);
+    AgentMessageVO analyseVolunteerTable(AnalyseDTO analyseDTO);
 
 }

@@ -1,5 +1,6 @@
 package a311.college.controller.volunteer;
 
+import a311.college.agent.AgentMessageVO;
 import a311.college.constant.API.APIConstant;
 import a311.college.dto.user.VolunteerPageDTO;
 import a311.college.dto.volunteer.AddVolunteerDTO;
@@ -171,11 +172,11 @@ public class VolunteerController {
      * AI分析志愿表
      *
      * @param analyseDTO 分析DTO
-     * @return Result<UserAIMessageVO>
+     * @return Result<AgentMessageVO>
      */
     @PostMapping("/analyse")
     @Operation(summary = "AI分析志愿表")
-    public Result<UserAIMessageVO> analyseVolunteerTable(@RequestBody AnalyseDTO analyseDTO) {
+    public Result<AgentMessageVO> analyseVolunteerTable(@RequestBody AnalyseDTO analyseDTO) {
         log.info("志愿表分析");
         return Result.success(volunteerService.analyseVolunteerTable(analyseDTO));
     }

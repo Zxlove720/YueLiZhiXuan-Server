@@ -1,5 +1,6 @@
 package a311.college.service.impl;
 
+import a311.college.agent.AgentMessageVO;
 import a311.college.dto.user.VolunteerPageDTO;
 import a311.college.dto.volunteer.AddVolunteerDTO;
 import a311.college.dto.volunteer.AnalyseDTO;
@@ -262,10 +263,10 @@ public class VolunteerServiceImpl implements VolunteerService {
      * AI智能分析志愿表
      *
      * @param analyseDTO 分析DTO
-     * @return UserAIMessageVO
+     * @return AgentMessageVO
      */
     @Override
-    public UserAIMessageVO analyseVolunteerTable(AnalyseDTO analyseDTO) {
+    public AgentMessageVO analyseVolunteerTable(AnalyseDTO analyseDTO) {
         return douBaoService.analyseVolunteerTable(analyseDTO);
     }
 

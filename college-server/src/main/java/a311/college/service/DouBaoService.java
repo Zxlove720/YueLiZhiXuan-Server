@@ -18,7 +18,7 @@ public interface DouBaoService {
 
     AgentMessageVO majorInformation(MajorAIRequestDTO majorAIRequestDTO);
 
-    UserAIMessageVO analyseVolunteerTable(AnalyseDTO analyseDTO);
+    AgentMessageVO analyseVolunteerTable(AnalyseDTO analyseDTO);
 
     void saveRecord(ChatRecord record);
 

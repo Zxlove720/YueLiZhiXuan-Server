@@ -17,7 +17,7 @@ public interface ChatRecordMapper {
      * @param userId 用户id
      * @return List<ChatRecord> 会话记录
      */
-    @Select("SELECT conversation_id FROM tb_agent_chat_record WHERE user_id = #{userId} ORDER BY create_time DESC")
+    @Select("SELECT conversation_id, create_time FROM tb_agent_chat_record WHERE user_id = #{userId} ORDER BY create_time DESC")
     List<ChatRecord> findRecordByUserId(@Param("userId") Long userId);
 
 
