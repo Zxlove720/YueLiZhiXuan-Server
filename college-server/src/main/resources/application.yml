@@ -28,23 +28,37 @@ spring:
           max-idle: ${college.data.redis.lettuce.pool.max-idle}
           min-idle: ${college.data.redis.lettuce.pool.min-idle}
           time-between-eviction-runs: ${college.data.redis.lettuce.pool.time-between-eviction-runs}
+  # 配置Spring Http请求的超时时间
+  http:
+    client:
+      connect-timeout: 60s
+      read-timeout: 120s
 
   # 配置SpringAI
   ai:
     # 豆包API
     openai:
       base-url: https://ark.cn-beijing.volces.com/api/v3
-      api-key:
+      api-key: ${DOUBAO_API_KEY}
       chat:
+        completions-path: /chat/completions
         options:
-          model: doubao-seed-2-0-lite-260215
+          model: doubao-1-5-lite-32k-250115
+          temperature: 0.7
     # 不思考版本deepseek
     deepseek:
       base-url: https://api.deepseek.com
-      api-key:
+      api-key: ${DEEPSEEK_API_KEY}
       chat:
         options:
           model: deepseek-reasoner
+          temperature: 0.7
+    chat:
+      memory:
+        repository:
+          jdbc:
+            initialize-schema: always
+            schema: classpath:sql/agent.sql
 
 # 设置mybatis
 mybatis:

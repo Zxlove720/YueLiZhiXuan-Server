@@ -1,5 +1,7 @@
 package a311.college.service.impl;
 
+import a311.college.agent.AgentMessageVO;
+import a311.college.agent.AgentUtil;
 import a311.college.constant.deepseek.DouBaoConstant;
 import a311.college.constant.error.ErrorConstant;
 import a311.college.constant.redis.DouBaoRedisKey;
@@ -16,8 +18,6 @@ import a311.college.mapper.school.SchoolMapper;
 import a311.college.mapper.volunteer.VolunteerMapper;
 import a311.college.service.DouBaoService;
 import a311.college.thread.ThreadLocalUtil;
-import a311.college.vo.ai.MajorAIMessageVO;
-import a311.college.vo.ai.SchoolAIMessageVO;
 import a311.college.vo.ai.UserAIMessageVO;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
@@ -52,13 +52,17 @@ public class DouBaoServiceImpl implements DouBaoService {
 
     private final ChatRecordMapper chatRecordMapper;
 
+    private final AgentUtil agentUtil;
+
     public DouBaoServiceImpl(RedisTemplate<String, Object> redisTemplate, SchoolMapper schoolMapper,
-                             MajorMapper majorMapper, VolunteerMapper volunteerMapper, ChatRecordMapper chatRecordMapper) {
+                             MajorMapper majorMapper, VolunteerMapper volunteerMapper,
+                             ChatRecordMapper chatRecordMapper, AgentUtil agentUtil) {
         this.redisTemplate = redisTemplate;
         this.schoolMapper = schoolMapper;
         this.majorMapper = majorMapper;
         this.volunteerMapper = volunteerMapper;
         this.chatRecordMapper = chatRecordMapper;
+        this.agentUtil = agentUtil;
     }
 
     /**
@@ -221,42 +225,76 @@ public class DouBaoServiceImpl implements DouBaoService {
         return new UserAIMessageVO(DouBaoConstant.ROLE_ASSISTANT, ErrorConstant.DOUBAO_SERVICE_ERROR);
     }
 
-    /**
-     * 请求AI获取学校信息
-     *
-     * @param schoolAIRequestDTO 大学AI请求DTO
-     * @return SchoolAIMessageVO 大学AI请求VO
-     */
-    @Override
-    public SchoolAIMessageVO schoolInformation(SchoolAIRequestDTO schoolAIRequestDTO) {
-        // 1.获取需要请求的学校名
-        String schoolName = schoolMapper.selectBySchoolId(schoolAIRequestDTO.getSchoolId()).getSchoolName();
-        // 2.封装问题
-        String question = "请为我介绍" + schoolName + "的详细信息";
-        Request request = buildRequest(question);
-        // 3.发起请求并获取回答
-        String answer = executeRequest(request);
-        log.info(DouBaoConstant.ROLE_ASSISTANT + "{}", answer);
-        return new SchoolAIMessageVO(DouBaoConstant.ROLE_ASSISTANT, markDown2HTML(StringEscapeUtils.escapeHtml4(answer)));
-    }
+//    /**
+//     * 请求AI获取学校信息
+//     *
+//     * @param schoolAIRequestDTO 大学AI请求DTO
+//     * @return SchoolAIMessageVO 大学AI请求VO
+//     */
+//    @Override
+//    public SchoolAIMessageVO schoolInformation(SchoolAIRequestDTO schoolAIRequestDTO) {
+//        // 1.获取需要请求的学校名
+//        String schoolName = schoolMapper.selectBySchoolId(schoolAIRequestDTO.getSchoolId()).getSchoolName();
+//        // 2.封装问题
+//        String question = "请为我介绍" + schoolName + "的详细信息";
+//        Request request = buildRequest(question);
+//        // 3.发起请求并获取回答
+//        String answer = executeRequest(request);
+//        log.info(DouBaoConstant.ROLE_ASSISTANT + "{}", answer);
+//        return new SchoolAIMessageVO(DouBaoConstant.ROLE_ASSISTANT, markDown2HTML(StringEscapeUtils.escapeHtml4(answer)));
+//    }
 
     /**
-     * 请求AI获取专业信息
+     * 请求agent获取学校信息
      *
-     * @param majorAIRequestDTO 专业AI请求DTO
-     * @return MajorAIMessageVO 专业AI请求VO
+     * @param schoolAIRequestDTO 大学agent请求DTO
+     * @return AgentMessageVO agent消息VO
      */
     @Override
-    public MajorAIMessageVO majorInformation(MajorAIRequestDTO majorAIRequestDTO) {
+    public AgentMessageVO schoolInformation(SchoolAIRequestDTO schoolAIRequestDTO) {
+        // 1.获取需要请求的学校名
+        String schoolName = schoolMapper.selectBySchoolId(schoolAIRequestDTO.getSchoolId()).getSchoolName();
+        // 2.封装提示词
+        String prompt = "请为我介绍" + schoolName + "的详细信息";
+        // 3.发起请求并获取回答
+        String answer = agentUtil.simpleChat(prompt);
+        return new AgentMessageVO(DouBaoConstant.ROLE_ASSISTANT, markDown2HTML(StringEscapeUtils.escapeHtml4(answer)));
+    }
+
+//    /**
+//     * 请求AI获取专业信息
+//     *
+//     * @param majorAIRequestDTO 专业AI请求DTO
+//     * @return MajorAIMessageVO 专业AI请求VO
+//     */
+//    @Override
+//    public MajorAIMessageVO majorInformation(MajorAIRequestDTO majorAIRequestDTO) {
+//        // 1.获取需要请求的专业名并封装问题
+//        String majorName = majorMapper.selectById(majorAIRequestDTO.getMajorId()).getMajorName();
+//        String question = "请为我介绍" + majorName + "这个专业";
+//        // 2.构建请求
+//        Request request = buildRequest(question);
+//        // 3.发起请求并获取回答
+//        String answer = executeRequest(request);
+//        log.info(DouBaoConstant.ROLE_ASSISTANT + "{}", answer);
+//        return new MajorAIMessageVO(DouBaoConstant.ROLE_ASSISTANT, markDown2HTML(StringEscapeUtils.escapeHtml4(answer)));
+//    }
+
+    /**
+     * 请求agent获取专业信息
+     *
+     * @param majorAIRequestDTO 专业agent请求DTO
+     * @return AgentMessageVO agent消息VO
+     */
+    @Override
+    public AgentMessageVO majorInformation(MajorAIRequestDTO majorAIRequestDTO) {
         // 1.获取需要请求的专业名并封装问题
         String majorName = majorMapper.selectById(majorAIRequestDTO.getMajorId()).getMajorName();
-        String question = "请为我介绍" + majorName + "这个专业";
-        // 2.构建请求
-        Request request = buildRequest(question);
+        // 2.封装提示词
+        String prompt = "请为我介绍" + majorName + "这个专业的详细信息";
         // 3.发起请求并获取回答
-        String answer = executeRequest(request);
-        log.info(DouBaoConstant.ROLE_ASSISTANT + "{}", answer);
-        return new MajorAIMessageVO(DouBaoConstant.ROLE_ASSISTANT, markDown2HTML(StringEscapeUtils.escapeHtml4(answer)));
+        String answer = agentUtil.chat(prompt);
+        return new AgentMessageVO(DouBaoConstant.ROLE_ASSISTANT, markDown2HTML(StringEscapeUtils.escapeHtml4(answer)));
     }
 
     /**

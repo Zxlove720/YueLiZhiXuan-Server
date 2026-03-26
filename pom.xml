@@ -6,7 +6,8 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.3.1</version>
+        <!--把SpringBoot的版本改成3.4以后的，为了方便在application中配置http请求的超时时间-->
+        <version>3.4.6</version>
         <relativePath/>
     </parent>
 

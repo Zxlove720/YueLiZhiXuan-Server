@@ -1,6 +1,7 @@
 package a311.college.controller.school;
 
 
+import a311.college.agent.AgentMessageVO;
 import a311.college.constant.API.APIConstant;
 import a311.college.dto.ai.SchoolAIRequestDTO;
 import a311.college.dto.query.school.*;
@@ -8,7 +9,6 @@ import a311.college.dto.school.*;
 import a311.college.dto.user.UserSearchDTO;
 import a311.college.entity.school.School;
 import a311.college.service.DouBaoService;
-import a311.college.vo.ai.SchoolAIMessageVO;
 import a311.college.entity.school.SchoolMajor;
 import a311.college.result.PageResult;
 import a311.college.result.Result;
@@ -325,10 +325,10 @@ public class SchoolController {
      */
     @PostMapping("/information")
     @Operation(summary = "请求AI获取学校信息")
-    public Result<SchoolAIMessageVO> schoolAIRequest(@RequestBody SchoolAIRequestDTO schoolAIRequestDTO) {
+    public Result<AgentMessageVO> schoolAIRequest(@RequestBody SchoolAIRequestDTO schoolAIRequestDTO) {
         log.info("正在请求'{}'学校的信息", schoolAIRequestDTO.getSchoolId());
-        SchoolAIMessageVO schoolAIMessageVO = douBaoService.schoolInformation(schoolAIRequestDTO);
-        return Result.success(schoolAIMessageVO);
+        AgentMessageVO AgentMessageVO = douBaoService.schoolInformation(schoolAIRequestDTO);
+        return Result.success(AgentMessageVO);
     }
 
 }

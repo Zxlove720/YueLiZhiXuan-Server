@@ -1,6 +1,6 @@
 package a311.college.controller.doubao;
 
-import a311.college.config.agent.AgentMessageVO;
+import a311.college.agent.AgentMessageVO;
 import a311.college.dto.ai.UserAIRequestDTO;
 import a311.college.entity.agent.ChatRecord;
 import a311.college.result.Result;
@@ -151,7 +151,7 @@ public class DouBaoController {
      */
     @GetMapping("/{chatId}")
     public Result<List<AgentMessageVO>> getChatHistory(@PathVariable String chatId) {
-        return Result.success(chatMemoryRepository .findByConversationId(chatId).stream().map(AgentMessageVO::new).toList());
+        return Result.success(chatMemoryRepository.findByConversationId(chatId).stream().map(AgentMessageVO::new).toList());
     }
 
 }

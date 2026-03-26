@@ -1,4 +1,4 @@
-package a311.college.config.agent;
+package a311.college.agent;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;

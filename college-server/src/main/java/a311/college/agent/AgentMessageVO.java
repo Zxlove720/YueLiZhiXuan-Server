@@ -1,4 +1,4 @@
-package a311.college.config.agent;
+package a311.college.agent;
 
 import java.io.Serial;
 import java.io.Serializable;

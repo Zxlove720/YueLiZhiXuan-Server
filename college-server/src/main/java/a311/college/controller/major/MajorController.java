@@ -1,5 +1,6 @@
 package a311.college.controller.major;
 
+import a311.college.agent.AgentMessageVO;
 import a311.college.constant.API.APIConstant;
 import a311.college.dto.major.MajorDTO;
 import a311.college.dto.query.major.*;
@@ -15,7 +16,6 @@ import a311.college.result.Result;
 import a311.college.service.DouBaoService;
 import a311.college.service.MajorService;
 import a311.college.thread.ThreadLocalUtil;
-import a311.college.vo.ai.MajorAIMessageVO;
 import a311.college.vo.major.DetailMajorVO;
 import a311.college.vo.school.CommentVO;
 import io.swagger.v3.oas.annotations.Operation;
@@ -89,14 +89,14 @@ public class MajorController {
     /**
      * 请求AI获取专业信息
      *
-     * @return Result<MajorAIMessageVO>
+     * @return Result<AgentMessageVO>
      */
     @PostMapping("/information")
     @Operation(summary = "请求AI获取专业信息")
-    public Result<MajorAIMessageVO> majorAIRequest(@RequestBody MajorAIRequestDTO majorAIRequestDTO) {
+    public Result<AgentMessageVO> majorAIRequest(@RequestBody MajorAIRequestDTO majorAIRequestDTO) {
         log.info("正在请求'{}'专业的信息", majorAIRequestDTO.getMajorId());
-        MajorAIMessageVO majorAIMessageVO = douBaoService.majorInformation(majorAIRequestDTO);
-        return Result.success(majorAIMessageVO);
+        AgentMessageVO agentMessageVO = douBaoService.majorInformation(majorAIRequestDTO);
+        return Result.success(agentMessageVO);
     }
 
     /**
