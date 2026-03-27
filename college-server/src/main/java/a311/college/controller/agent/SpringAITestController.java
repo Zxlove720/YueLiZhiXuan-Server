@@ -1,21 +1,16 @@
-package a311.college.controller.doubao;
+package a311.college.controller.agent;
 
 import a311.college.agent.AgentMessageVO;
-import a311.college.dto.ai.UserAIRequestDTO;
 import a311.college.entity.agent.ChatRecord;
 import a311.college.result.Result;
-import a311.college.service.DouBaoService;
+import a311.college.service.AgentService;
 import a311.college.thread.ThreadLocalUtil;
-import a311.college.vo.ai.UserAIMessageVO;
-import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.deepseek.DeepSeekAssistantMessage;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 
@@ -25,38 +20,27 @@ import java.util.List;
 
 @Slf4j
 @RestController
-@RequestMapping("/ai")
-public class DouBaoController {
+@RequestMapping("/test/ai")
+public class SpringAITestController {
 
     private final ChatClient chatClient;
 
-    private final DouBaoService douBaoService;
+    private final AgentService douBaoService;
 
     private final ChatMemoryRepository chatMemoryRepository;
 
-    @Autowired
-    public DouBaoController(DouBaoService douBaoService, ChatClient chatClient,
-                            @Qualifier(value = "jdbcChatMemoryRepository") ChatMemoryRepository chatMemoryRepository) {
-        this.douBaoService = douBaoService;
+
+    public SpringAITestController(ChatClient chatClient, AgentService douBaoService, ChatMemoryRepository chatMemoryRepository) {
         this.chatClient = chatClient;
+        this.douBaoService = douBaoService;
         this.chatMemoryRepository = chatMemoryRepository;
     }
 
     /**
-     * 回答用户问题
-     *
-     * @param request 用户请求
-     * @return Result<Void>
-     */
-    @PostMapping("/answer")
-    @Operation(summary = "DeepSeekApi回答问题")
-    public Result<UserAIMessageVO> responseQuestion(@RequestBody UserAIRequestDTO request) {
-        return Result.success(douBaoService.response(request));
-    }
-
-    /**
      * SpringAI实现对话功能
-     *
+     * <p>
+     *     最简单的实现，没有对话记忆；没有流式输出，单纯就是把一次请求大模型API的操作进行了封装
+     * </p>
      * @param prompt 用户提示词
      * @return Result<String> 大模型生成结果
      */
@@ -73,13 +57,15 @@ public class DouBaoController {
 
     /**
      * SpringAI实现对话功能
+     * <p>
+     *     项目实际使用实现，支持对话记忆并存储至数据库，支持日志，流式输出；支持深度思考
+     * </p>
      *
      * @param prompt 用户提示词
      * @return Result<Flux<String>> 大模型生成结果
      */
     @RequestMapping("/chat")
     public Flux<String> chat(@RequestParam(defaultValue = "你好") String prompt, @RequestParam @NotNull String chatId) {
-        log.info("进入chat Stream方法");
 //        // 常规使用 非深度思考
 //        return chatClient
 //                // 传入提示词
@@ -153,5 +139,6 @@ public class DouBaoController {
     public Result<List<AgentMessageVO>> getChatHistory(@PathVariable String chatId) {
         return Result.success(chatMemoryRepository.findByConversationId(chatId).stream().map(AgentMessageVO::new).toList());
     }
+
 
 }

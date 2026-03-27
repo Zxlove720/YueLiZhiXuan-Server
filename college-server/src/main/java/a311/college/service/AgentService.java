@@ -10,9 +10,9 @@ import a311.college.vo.ai.UserAIMessageVO;
 
 import java.util.List;
 
-public interface DouBaoService {
+public interface AgentService {
 
-    UserAIMessageVO response(UserAIRequestDTO request);
+//    UserAIMessageVO response(UserAIRequestDTO request);
 
     AgentMessageVO schoolInformation(SchoolAIRequestDTO schoolAIRequestDTO);
 

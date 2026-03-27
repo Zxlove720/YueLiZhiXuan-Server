@@ -1,16 +1,26 @@
 package a311.college.agent;
 
+import a311.college.entity.agent.ChatRecord;
+import a311.college.service.AgentService;
+import a311.college.thread.ThreadLocalUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.deepseek.DeepSeekAssistantMessage;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.PathVariable;
 import reactor.core.publisher.Flux;
 
 import javax.validation.constraints.NotNull;
+import java.time.LocalDateTime;
+import java.util.List;
 
+/**
+ * 大模型相关工具类
+ */
 @Slf4j
 @Component
 public class AgentUtil {
@@ -21,13 +31,27 @@ public class AgentUtil {
     // 没有对话记忆的chatClient，主要用于请求大模型获取大学、专业的信息
     private final ChatClient simpleChatClient;
 
-    public AgentUtil(ChatClient chatClient, @Qualifier(value = "simpleChatClient") ChatClient simpleChatClient) {
+    // 对话记忆Repository，用于获取对话记忆
+    private final ChatMemoryRepository chatMemoryRepository;
+
+    // 大模型和本地数据库相关服务
+    private final AgentService agentService;
+
+    public AgentUtil(@Qualifier(value = "chatClient") ChatClient chatClient,
+                     @Qualifier(value = "simpleChatClient") ChatClient simpleChatClient,
+                     AgentService agentService,
+                     ChatMemoryRepository chatMemoryRepository) {
         this.chatClient = chatClient;
         this.simpleChatClient = simpleChatClient;
+        this.agentService = agentService;
+        this.chatMemoryRepository = chatMemoryRepository;
     }
 
     /**
      * 请求大模型获取信息
+     * <p>
+     * 无需会话记忆，无需深度思考，只需要最简单的一次性提问，回答即可
+     * </p>
      *
      * @param prompt 提示词
      * @return 大模型返回的信息
@@ -39,7 +63,31 @@ public class AgentUtil {
                 .content();
     }
 
-    public Flux<String> chatWithStream(String prompt, @NotNull String conversationId) {
+    /**
+     * 和大模型对话并深度思考
+     * <p>
+     * 用户和大模型对话，支持会话记忆和深度思考
+     * </p>
+     *
+     * @param prompt 提示词
+     * @param chatId 对话id
+     * @return Flux<String> 流式输出的回答
+     */
+    public Flux<String> chatWithThink(String prompt, @NotNull String chatId) {
+        Long userId = ThreadLocalUtil.getCurrentId();
+        String conversationId = chatId + "-" + userId;
+        ChatRecord chatRecordDetail = agentService.getChatRecordDetail(conversationId);
+        if (chatRecordDetail == null) {
+            log.info("conversationId：{}在数据库中不存在，需要创建会话记录", conversationId);
+            // 构造会话记录
+            ChatRecord chatRecord = new ChatRecord();
+            chatRecord.setConversationId(conversationId);
+            chatRecord.setUserId(userId);
+            chatRecord.setTitle(prompt.substring(0, 10));
+            chatRecord.setCreateTime(LocalDateTime.now());
+            // 保存会话记录
+            agentService.saveRecord(chatRecord);
+        }
         return chatClient
                 .prompt(prompt)
                 // ChatMemory是根据conversationId来区分不同会话的，所以说为了区分不同对话，需要在发送请求的时候携带会话id
@@ -52,6 +100,10 @@ public class AgentUtil {
 
     /**
      * 处理DeepSeek模型深度思考内容
+     * <p>
+     * 处理DeepSeek模型深度思考的内容，其他模型调用chatResponse方法返回的是AssistantMessage类型，需要转换为DeepSeek模型
+     * 专用的DeepSeekAssistantMessage类型，并从中获取ReasoningContent，ReasoningContent就是思考内容
+     * </p>
      *
      * @param chatResponse ChatResponse 模型响应
      * @return String 深度思考内容
@@ -66,6 +118,31 @@ public class AgentUtil {
         }
         // 没有推理结果，直接返回文本
         return deepSeekAssistantMessage.getText();
+    }
+
+    /**
+     * 获取对话记录
+     * <p>
+     * 根据用户id获取用户对话记录
+     * </p>
+     *
+     * @return List<ChatRecord>
+     */
+    public List<ChatRecord> getChatRecord() {
+        return agentService.getUserChatRecordList(ThreadLocalUtil.getCurrentId());
+    }
+
+    /**
+     * 获取对话历史
+     * <p>
+     * 根据chatId获取某次对话历史
+     * </p>
+     *
+     * @param chatId 对话id
+     * @return List<AgentMessageVO>
+     */
+    public List<AgentMessageVO> getChatHistory(@PathVariable String chatId) {
+        return chatMemoryRepository.findByConversationId(chatId).stream().map(AgentMessageVO::new).toList();
     }
 
 }

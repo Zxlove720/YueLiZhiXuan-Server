@@ -10,10 +10,9 @@ import a311.college.exception.ReAdditionException;
 import a311.college.exception.volunteer.VolunteerException;
 import a311.college.mapper.volunteer.VolunteerMapper;
 import a311.college.result.PageResult;
-import a311.college.service.DouBaoService;
+import a311.college.service.AgentService;
 import a311.college.service.VolunteerService;
 import a311.college.thread.ThreadLocalUtil;
-import a311.college.vo.ai.UserAIMessageVO;
 import a311.college.vo.volunteer.SchoolVolunteer;
 import a311.college.vo.volunteer.VolunteerVO;
 import cn.hutool.core.bean.BeanUtil;
@@ -32,11 +31,11 @@ public class VolunteerServiceImpl implements VolunteerService {
 
     private final VolunteerMapper volunteerMapper;
 
-    private final DouBaoService douBaoService;
+    private final AgentService douBaoService;
 
 
     @Autowired
-    public VolunteerServiceImpl(VolunteerMapper volunteerMapper, DouBaoService douBaoService) {
+    public VolunteerServiceImpl(VolunteerMapper volunteerMapper, AgentService douBaoService) {
         this.volunteerMapper = volunteerMapper;
         this.douBaoService = douBaoService;
     }

@@ -51,6 +51,9 @@ public class SpringAIConfiguration {
 
     /**
      * 创建ChatClient
+     * <p>
+     *     用于用户和agent对话使用的ChatClient，使用DeepSeek模型，支持对话记忆
+     * </p>
      *
      * @param chatModel ChatModel实体
      * @return ChatClient
@@ -73,6 +76,9 @@ public class SpringAIConfiguration {
 
     /**
      * 创建ChatClient
+     * <p>
+     *     用于在页面中请求大模型获取信息的chatClient，使用doubao大模型，没有对话记忆，没有深度思考，只能单次对话
+     * </p>
      *
      * @param chatModel ChatModel实体
      * @return ChatClient

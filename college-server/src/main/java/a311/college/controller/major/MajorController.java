@@ -13,7 +13,7 @@ import a311.college.entity.major.SubjectCategory;
 import a311.college.entity.school.School;
 import a311.college.result.PageResult;
 import a311.college.result.Result;
-import a311.college.service.DouBaoService;
+import a311.college.service.AgentService;
 import a311.college.service.MajorService;
 import a311.college.thread.ThreadLocalUtil;
 import a311.college.vo.major.DetailMajorVO;
@@ -37,10 +37,10 @@ public class MajorController {
 
     private final MajorService majorService;
 
-    private final DouBaoService douBaoService;
+    private final AgentService douBaoService;
 
     @Autowired
-    public MajorController(MajorService majorService, DouBaoService douBaoService) {
+    public MajorController(MajorService majorService, AgentService douBaoService) {
         this.majorService = majorService;
         this.douBaoService = douBaoService;
     }
