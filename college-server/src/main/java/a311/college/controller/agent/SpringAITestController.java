@@ -132,12 +132,12 @@ public class SpringAITestController {
     /**
      * 获取对话历史
      *
-     * @param chatId 对话id
+     * @param conversationId 对话id
      * @return Result<List<AgentMessageVO>>
      */
-    @GetMapping("/{chatId}")
-    public Result<List<AgentMessageVO>> getChatHistory(@PathVariable String chatId) {
-        return Result.success(chatMemoryRepository.findByConversationId(chatId).stream().map(AgentMessageVO::new).toList());
+    @GetMapping("/{conversationId}")
+    public Result<List<AgentMessageVO>> getChatHistory(@PathVariable String conversationId) {
+        return Result.success(chatMemoryRepository.findByConversationId(conversationId).stream().map(AgentMessageVO::new).toList());
     }
 
 

@@ -70,20 +70,18 @@ public class AgentUtil {
      * </p>
      *
      * @param prompt 提示词
-     * @param chatId 对话id
+     * @param conversationId 对话id
      * @return Flux<String> 流式输出的回答
      */
-    public Flux<String> chatWithThink(String prompt, @NotNull String chatId) {
-        Long userId = ThreadLocalUtil.getCurrentId();
-        String conversationId = chatId + "-" + userId;
+    public Flux<String> chatWithThink(String prompt, @NotNull String conversationId) {
         ChatRecord chatRecordDetail = agentService.getChatRecordDetail(conversationId);
         if (chatRecordDetail == null) {
             log.info("conversationId：{}在数据库中不存在，需要创建会话记录", conversationId);
             // 构造会话记录
             ChatRecord chatRecord = new ChatRecord();
             chatRecord.setConversationId(conversationId);
-            chatRecord.setUserId(userId);
-            chatRecord.setTitle(prompt.substring(0, 10));
+            chatRecord.setUserId(ThreadLocalUtil.getCurrentId());
+            chatRecord.setTitle(prompt.length() >= 10 ? prompt.substring(0, 10): prompt);
             chatRecord.setCreateTime(LocalDateTime.now());
             // 保存会话记录
             agentService.saveRecord(chatRecord);
@@ -117,7 +115,12 @@ public class AgentUtil {
             return "<think>" + reasoningContent + "</think>";
         }
         // 没有推理结果，直接返回文本
-        return deepSeekAssistantMessage.getText();
+        String text = deepSeekAssistantMessage.getText();
+        // getText() 可能返回 null 或空白，统一过滤，避免无效 SSE 事件穿透 mapNotNull
+        if (text == null || text.isBlank()) {
+            return null;
+        }
+        return text;
     }
 
     /**

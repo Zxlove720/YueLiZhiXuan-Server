@@ -44,8 +44,8 @@ spring:
         completions-path: /chat/completions
         options:
           model: doubao-1-5-lite-32k-250115
-          temperature: 0.7
-    # 不思考版本deepseek
+          temperature: 0.3
+    # 思考版本deepseek
     deepseek:
       base-url: https://api.deepseek.com
       api-key: ${DEEPSEEK_API_KEY}

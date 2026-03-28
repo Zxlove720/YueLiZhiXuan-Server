@@ -41,8 +41,8 @@ public class AgentController {
      * @return Result<Flux<String>> 大模型生成结果
      */
     @RequestMapping("/chat")
-    public Flux<String> chat(@RequestParam(defaultValue = "你好") String prompt, @RequestParam @NotNull String chatId) {
-        return agentUtil.chatWithThink(prompt, chatId);
+    public Flux<String> chat(@RequestParam(defaultValue = "你好") String prompt, @RequestParam @NotNull String conversationId) {
+        return agentUtil.chatWithThink(prompt, conversationId);
     }
 
     /**

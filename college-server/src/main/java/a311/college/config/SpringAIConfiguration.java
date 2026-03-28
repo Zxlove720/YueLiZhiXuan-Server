@@ -8,8 +8,10 @@ import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepository;
 import org.springframework.ai.deepseek.DeepSeekChatModel;
 import org.springframework.ai.openai.OpenAiChatModel;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.Resource;
 
 
 /**
@@ -17,6 +19,14 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 public class SpringAIConfiguration {
+
+    /** 高考小鲤多轮对话系统提示词 */
+    @Value("classpath:prompt/system.txt")
+    private Resource systemPrompt;
+
+    /** 院校/专业/志愿单次信息查询系统提示词 */
+    @Value("classpath:prompt/information.txt")
+    private Resource informationPrompt;
 
 //    /**
 //     * 自定义 RestClient 超时，覆盖 Spring AI 默认的 10s 超时
@@ -60,17 +70,10 @@ public class SpringAIConfiguration {
      */
     @Bean
     public ChatClient chatClient(DeepSeekChatModel chatModel, ChatMemory chatMemory) {
-        // 使用SpringAI的核心是ChatClient，ChatClient需要一个Model，就是想要使用的模型，SpringAI封装好了常见的模型，可以直接使用
         return ChatClient
-                // 创建ChatClient工厂
                 .builder(chatModel)
-                // 设置System背景信息，现在只需要在创建ChatClient的时候指定System背景信息即可，不需要每次发送请求的时候都封装到Message中
-                .defaultSystem("你的名字叫豆包")
-                // 通过Spring AOP给大模型调用添加环绕通知，进行日志记录
-                // 添加日志记录Advisor
-                // 添加会话记忆Advisor
+                .defaultSystem(systemPrompt)
                 .defaultAdvisors(SimpleLoggerAdvisor.builder().build(), MessageChatMemoryAdvisor.builder(chatMemory).build())
-                // 构建ChatClient实例
                 .build();
     }
 
@@ -85,17 +88,10 @@ public class SpringAIConfiguration {
      */
     @Bean
     public ChatClient simpleChatClient(OpenAiChatModel chatModel) {
-        // 使用SpringAI的核心是ChatClient，ChatClient需要一个Model，就是想要使用的模型，SpringAI封装好了常见的模型，可以直接使用
         return ChatClient
-                // 创建ChatClient工厂
                 .builder(chatModel)
-                // 设置System背景信息，现在只需要在创建ChatClient的时候指定System背景信息即可，不需要每次发送请求的时候都封装到Message中
-                .defaultSystem("你的名字叫豆包")
-                // 通过Spring AOP给大模型调用添加环绕通知，进行日志记录
-                // 添加日志记录Advisor
-                // 添加会话记忆Advisor
+                .defaultSystem(informationPrompt)
                 .defaultAdvisors(SimpleLoggerAdvisor.builder().build())
-                // 构建ChatClient实例
                 .build();
     }
 
