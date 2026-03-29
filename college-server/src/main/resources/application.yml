@@ -8,6 +8,14 @@ spring:
     active: dev
   main:
     allow-circular-references: true
+  autoconfigure:
+    exclude:
+      - org.springframework.ai.model.openai.autoconfigure.OpenAiChatAutoConfiguration
+      - org.springframework.ai.model.openai.autoconfigure.OpenAiEmbeddingAutoConfiguration
+      - org.springframework.ai.model.openai.autoconfigure.OpenAiImageAutoConfiguration
+      - org.springframework.ai.model.openai.autoconfigure.OpenAiAudioSpeechAutoConfiguration
+      - org.springframework.ai.model.openai.autoconfigure.OpenAiAudioTranscriptionAutoConfiguration
+      - org.springframework.ai.model.openai.autoconfigure.OpenAiModerationAutoConfiguration
 
   # 设置mysql
   datasource:
@@ -36,16 +44,18 @@ spring:
 
   # 配置SpringAI
   ai:
-    # 豆包API
-    openai:
-      base-url: https://ark.cn-beijing.volces.com/api/v3
-      api-key: ${DOUBAO_API_KEY}
-      chat:
-        completions-path: /chat/completions
-        options:
-          model: doubao-1-5-lite-32k-250115
-          temperature: 0.3
-    # 思考版本deepseek
+    # 由于项目需要配置两个兼容openai的模型，无法在SpringAI中自动配置，于是进行手动配置
+#    # 豆包API
+#    openai:
+#      base-url: https://ark.cn-beijing.volces.com/api/v3
+#      api-key: ${DOUBAO_API_KEY}
+#      chat:
+#        completions-path: /chat/completions
+#        options:
+#          model: doubao-1-5-lite-32k-250115
+#          temperature: 0.3
+#    # 思考版本Deepseek
+#    # 由于DeepSeek不同时支持工具调用和深度思考，现在已经废弃
     deepseek:
       base-url: https://api.deepseek.com
       api-key: ${DEEPSEEK_API_KEY}
@@ -79,6 +89,18 @@ college:
     oss:
       endpoint: ${college.aliyun.oss.endpoint}
       bucket-name: ${college.aliyun.oss.bucket-name}
+  ai:
+    doubao:
+      base-url: https://ark.cn-beijing.volces.com/api/v3
+      api-key: ${DOUBAO_API_KEY}
+      model: doubao-1-5-lite-32k-250115
+      temperature: 0.3
+    qwen:
+      base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+      api-key: ${QWEN_API_KEY}
+      model: qwen3.5-flash
+      temperature: 0.7
+
 
 # 设置日志级别
 logging:

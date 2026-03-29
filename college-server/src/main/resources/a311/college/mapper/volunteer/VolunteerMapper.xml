@@ -38,14 +38,14 @@
     <select id="countVolunteerSchools" resultType="long">
         SELECT COUNT(DISTINCT s.school_id)
         FROM <include refid="baseJoin"/>
-        `WHERE` <include refid="scoreRangeCondition"/>
+        WHERE <include refid="scoreRangeCondition"/>
     </select>
 
     <!-- 分页获取学校ID（只取当前页需要的学校） -->
     <select id="selectPagedSchoolIds" resultType="int">
         SELECT s.school_id
         FROM <include refid="baseJoin"/>
-        `WHERE` <include refid="scoreRangeCondition"/>
+        WHERE <include refid="scoreRangeCondition"/>
         GROUP BY s.school_id
         <if test="dto.category == 1">
             ORDER BY s.score DESC
@@ -53,7 +53,7 @@
         <if test="dto.category == 2">
             ORDER BY MAX(sc.min_score) DESC
         </if>
-        `LIMIT` #{dto.pageSize} OFFSET #{offset}
+        LIMIT #{dto.pageSize} OFFSET #{offset}
     </select>
 
     <!-- 根据学校ID列表查询完整志愿信息（只查一页的数据量） -->
@@ -73,7 +73,7 @@
         sc.min_score,
         sc.min_ranking
         FROM <include refid="baseJoin"/>
-        `WHERE` s.school_id IN
+        WHERE s.school_id IN
         <foreach item="id" collection="schoolIds" open="(" separator="," close=")">
             #{id}
         </foreach>
@@ -82,7 +82,7 @@
             ORDER BY s.score DESC
         </if>
         <if test="dto.category == 2">
-            `ORDER` BY sc.min_score DESC
+            ORDER BY sc.min_score DESC
         </if>
     </select>
 

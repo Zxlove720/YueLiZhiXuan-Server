@@ -3,6 +3,7 @@ package a311.college.mapper.volunteer;
 import a311.college.dto.user.VolunteerPageDTO;
 import a311.college.entity.volunteer.Volunteer;
 import a311.college.entity.volunteer.VolunteerTable;
+import a311.college.tool.entity.VolunteerQuery;
 import a311.college.vo.volunteer.SchoolVolunteer;
 import org.apache.ibatis.annotations.*;
 
@@ -19,6 +20,8 @@ public interface VolunteerMapper {
      */
     long countVolunteerSchools(@Param("dto") VolunteerPageDTO volunteerPageDTO);
 
+    long countVolunteerSchools(@Param("dto") VolunteerQuery volunteerQuery);
+
     /**
      * 使用手动分页，只查询当前页的学校id
      *
@@ -28,6 +31,8 @@ public interface VolunteerMapper {
      */
     List<Integer> selectPagedSchoolIds(@Param("dto") VolunteerPageDTO volunteerPageDTO, @Param("offset") int offset);
 
+    List<Integer> selectPagedSchoolIds(@Param("dto") VolunteerQuery volunteerQuery, @Param("offset") int offset);
+
     /**
      * 根据schoolId查询到完整的数据
      *
@@ -36,6 +41,8 @@ public interface VolunteerMapper {
      * @return List<SchoolVolunteer> 完整的志愿数据
      */
     List<SchoolVolunteer> selectVolunteersBySchoolIds(@Param("schoolIds") List<Integer> schoolIds, @Param("dto") VolunteerPageDTO volunteerPageDTO);
+
+    List<SchoolVolunteer> selectVolunteersBySchoolIds(@Param("schoolIds") List<Integer> schoolIds, @Param("dto") VolunteerQuery volunteerPageDTO);
 
     /**
      * 判断志愿表是否重复创建

@@ -26,7 +26,7 @@ import java.util.List;
 public class AgentUtil {
 
     // 带对话记忆的chatClient，主要用于用户和agent交互
-    private final ChatClient chatClient;
+    private final ChatClient agentChatClient;
 
     // 没有对话记忆的chatClient，主要用于请求大模型获取大学、专业的信息
     private final ChatClient simpleChatClient;
@@ -37,11 +37,11 @@ public class AgentUtil {
     // 大模型和本地数据库相关服务
     private final AgentService agentService;
 
-    public AgentUtil(@Qualifier(value = "chatClient") ChatClient chatClient,
+    public AgentUtil(@Qualifier(value = "agentChatClient") ChatClient agentChatClient,
                      @Qualifier(value = "simpleChatClient") ChatClient simpleChatClient,
                      AgentService agentService,
                      ChatMemoryRepository chatMemoryRepository) {
-        this.chatClient = chatClient;
+        this.agentChatClient = agentChatClient;
         this.simpleChatClient = simpleChatClient;
         this.agentService = agentService;
         this.chatMemoryRepository = chatMemoryRepository;
@@ -86,42 +86,42 @@ public class AgentUtil {
             // 保存会话记录
             agentService.saveRecord(chatRecord);
         }
-        return chatClient
+        return agentChatClient
                 .prompt(prompt)
                 // ChatMemory是根据conversationId来区分不同会话的，所以说为了区分不同对话，需要在发送请求的时候携带会话id
                 .advisors(advisorSpec -> advisorSpec
                         .param(ChatMemory.CONVERSATION_ID, conversationId))
                 .stream()
-                .chatResponse()
-                .mapNotNull(this::handlerReasoningContent);
+                .content();
     }
 
-    /**
-     * 处理DeepSeek模型深度思考内容
-     * <p>
-     * 处理DeepSeek模型深度思考的内容，其他模型调用chatResponse方法返回的是AssistantMessage类型，需要转换为DeepSeek模型
-     * 专用的DeepSeekAssistantMessage类型，并从中获取ReasoningContent，ReasoningContent就是思考内容
-     * </p>
-     *
-     * @param chatResponse ChatResponse 模型响应
-     * @return String 深度思考内容
-     */
-    private String handlerReasoningContent(ChatResponse chatResponse) {
-        // 需要把AssistantMessage类型转换为DeepSeekAssistantMessage类型
-        DeepSeekAssistantMessage deepSeekAssistantMessage = (DeepSeekAssistantMessage) chatResponse.getResult().getOutput();
-        String reasoningContent = deepSeekAssistantMessage.getReasoningContent();
-        if (reasoningContent != null && !reasoningContent.isBlank()) {
-            // 如果推理结果存在，则将其包裹上<think></think>标签，方便前端处理
-            return "<think>" + reasoningContent + "</think>";
-        }
-        // 没有推理结果，直接返回文本
-        String text = deepSeekAssistantMessage.getText();
-        // getText() 可能返回 null 或空白，统一过滤，避免无效 SSE 事件穿透 mapNotNull
-        if (text == null || text.isBlank()) {
-            return null;
-        }
-        return text;
-    }
+//    /**
+//     * 处理DeepSeek模型深度思考内容
+//     * <p>
+//     * 处理DeepSeek模型深度思考的内容，其他模型调用chatResponse方法返回的是AssistantMessage类型，需要转换为DeepSeek模型
+//     * 专用的DeepSeekAssistantMessage类型，并从中获取ReasoningContent，ReasoningContent就是思考内容
+//     * DeepSeek 模型已废弃
+//     * </p>
+//     *
+//     * @param chatResponse ChatResponse 模型响应
+//     * @return String 深度思考内容
+//     */
+//    private String handlerReasoningContent(ChatResponse chatResponse) {
+//        // 需要把AssistantMessage类型转换为DeepSeekAssistantMessage类型
+//        DeepSeekAssistantMessage deepSeekAssistantMessage = (DeepSeekAssistantMessage) chatResponse.getResult().getOutput();
+//        String reasoningContent = deepSeekAssistantMessage.getReasoningContent();
+//        if (reasoningContent != null && !reasoningContent.isBlank()) {
+//            // 如果推理结果存在，则将其包裹上<think></think>标签，方便前端处理
+//            return "<think>" + reasoningContent + "</think>";
+//        }
+//        // 没有推理结果，直接返回文本
+//        String text = deepSeekAssistantMessage.getText();
+//        // getText() 可能返回 null 或空白，统一过滤，避免无效 SSE 事件穿透 mapNotNull
+//        if (text == null || text.isBlank()) {
+//            return null;
+//        }
+//        return text;
+//    }
 
     /**
      * 获取对话记录

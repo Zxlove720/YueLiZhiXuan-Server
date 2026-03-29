@@ -63,8 +63,10 @@ public class VolunteerServiceImpl implements VolunteerService {
         int userRanking = volunteerPageDTO.getRanking();
         int userGrade = volunteerPageDTO.getGrade();
         Integer schoolType = volunteerPageDTO.getSchoolType();
-        Set<Integer> addedMajorIds = new HashSet<>(volunteerMapper.selectAddedMajorIds(volunteerPageDTO.getTableId()));
-
+        Set<Integer> addedMajorIds = null;
+        if (volunteerPageDTO.getTableId() != null) {
+            addedMajorIds = new HashSet<>(volunteerMapper.selectAddedMajorIds(volunteerPageDTO.getTableId()));
+        }
         // 第四步：处理当前页数据（只处理一页的学校，非常快）
         for (SchoolVolunteer school : schoolVolunteerList) {
             List<VolunteerVO> distinctList = school.getVolunteerVOList().stream()
@@ -79,7 +81,9 @@ public class VolunteerServiceImpl implements VolunteerService {
             for (VolunteerVO volunteerVO : distinctList) {
                 Integer minRanking = volunteerVO.getScoreLineList().get(0).getMinRanking();
                 volunteerVO.setCategory(calculateCategory(minRanking, userRanking));
-                volunteerVO.setIsAdd(addedMajorIds.contains(volunteerVO.getMajorId()));
+                if (addedMajorIds != null) {
+                    volunteerVO.setIsAdd(addedMajorIds.contains(volunteerVO.getMajorId()));
+                }
                 for (ScoreLine scoreLine : volunteerVO.getScoreLineList()) {
                     scoreLine.setScoreThanMe(userGrade - scoreLine.getMinScore());
                     scoreLine.setRankingThanMe(userRanking - scoreLine.getMinRanking());
