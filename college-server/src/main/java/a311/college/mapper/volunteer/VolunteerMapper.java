@@ -12,12 +12,30 @@ import java.util.List;
 public interface VolunteerMapper {
 
     /**
-     * 查询志愿学校
+     * 统计符合条件的学校总数
      *
-     * @param volunteerPageDTO 用户志愿分页查询DTO
-     * @return List<School>
+     * @param volunteerPageDTO volunteerPageDTO
+     * @return long 符合条件的学校总数
      */
-    List<SchoolVolunteer> selectVolunteerSchool(VolunteerPageDTO volunteerPageDTO);
+    long countVolunteerSchools(@Param("dto") VolunteerPageDTO volunteerPageDTO);
+
+    /**
+     * 使用手动分页，只查询当前页的学校id
+     *
+     * @param volunteerPageDTO volunteerPageDTO
+     * @param offset 从哪条记录开始
+     * @return schoolIds
+     */
+    List<Integer> selectPagedSchoolIds(@Param("dto") VolunteerPageDTO volunteerPageDTO, @Param("offset") int offset);
+
+    /**
+     * 根据schoolId查询到完整的数据
+     *
+     * @param schoolIds schoolIds
+     * @param volunteerPageDTO volunteerPageDTO
+     * @return List<SchoolVolunteer> 完整的志愿数据
+     */
+    List<SchoolVolunteer> selectVolunteersBySchoolIds(@Param("schoolIds") List<Integer> schoolIds, @Param("dto") VolunteerPageDTO volunteerPageDTO);
 
     /**
      * 判断志愿表是否重复创建
@@ -160,5 +178,8 @@ public interface VolunteerMapper {
 
     @Select("select table_id from tb_volunteer where volunteer_id = #{volunteerId}")
     Integer getTableId(Integer volunteerId);
+
+    @Select("select major_id from tb_volunteer where table_id = #{tableId}")
+    List<Integer> selectAddedMajorIds(int tableId);
 
 }

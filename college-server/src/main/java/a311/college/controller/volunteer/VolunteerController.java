@@ -11,7 +11,6 @@ import a311.college.result.PageResult;
 import a311.college.result.Result;
 import a311.college.service.VolunteerService;
 import a311.college.thread.ThreadLocalUtil;
-import a311.college.vo.ai.UserAIMessageVO;
 import a311.college.vo.volunteer.SchoolVolunteer;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

@@ -14,10 +14,10 @@ import a311.college.service.AgentService;
 import a311.college.service.VolunteerService;
 import a311.college.thread.ThreadLocalUtil;
 import a311.college.vo.volunteer.SchoolVolunteer;
+import a311.college.vo.volunteer.ScoreLine;
 import a311.college.vo.volunteer.VolunteerVO;
 import cn.hutool.core.bean.BeanUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -33,8 +33,6 @@ public class VolunteerServiceImpl implements VolunteerService {
 
     private final AgentService douBaoService;
 
-
-    @Autowired
     public VolunteerServiceImpl(VolunteerMapper volunteerMapper, AgentService douBaoService) {
         this.volunteerMapper = volunteerMapper;
         this.douBaoService = douBaoService;
@@ -48,10 +46,27 @@ public class VolunteerServiceImpl implements VolunteerService {
      */
     @Override
     public PageResult<SchoolVolunteer> showVolunteer(VolunteerPageDTO volunteerPageDTO) {
-        List<SchoolVolunteer> schoolVolunteerList = volunteerMapper.selectVolunteerSchool(volunteerPageDTO);
-        // 在内存中处理分类逻辑
-        schoolVolunteerList.forEach(school -> {
-            // 使用LinkedHashMap保持插入顺序，合并时保留最后出现的元素
+        // 第一步：只查总数（轻量 COUNT 查询）
+        long total = volunteerMapper.countVolunteerSchools(volunteerPageDTO);
+        if (total == 0) {
+            return new PageResult<>(0L, Collections.emptyList());
+        }
+        // 第二步：只查当前页的学校ID（LIMIT/OFFSET 分页，返回极少数据）
+        int offset = (volunteerPageDTO.getPage() - 1) * volunteerPageDTO.getPageSize();
+        List<Integer> schoolIds = volunteerMapper.selectPagedSchoolIds(volunteerPageDTO, offset);
+        if (schoolIds.isEmpty()) {
+            return new PageResult<>(total, Collections.emptyList());
+        }
+        // 第三步：只查这几所学校的完整数据（IN 查询，数据量极小）
+        List<SchoolVolunteer> schoolVolunteerList = volunteerMapper.selectVolunteersBySchoolIds(schoolIds, volunteerPageDTO);
+
+        int userRanking = volunteerPageDTO.getRanking();
+        int userGrade = volunteerPageDTO.getGrade();
+        Integer schoolType = volunteerPageDTO.getSchoolType();
+        Set<Integer> addedMajorIds = new HashSet<>(volunteerMapper.selectAddedMajorIds(volunteerPageDTO.getTableId()));
+
+        // 第四步：处理当前页数据（只处理一页的学校，非常快）
+        for (SchoolVolunteer school : schoolVolunteerList) {
             List<VolunteerVO> distinctList = school.getVolunteerVOList().stream()
                     .collect(Collectors.toMap(
                             VolunteerVO::getMajorName,
@@ -60,19 +75,34 @@ public class VolunteerServiceImpl implements VolunteerService {
                             LinkedHashMap::new
                     ))
                     .values().stream().toList();
-            // 替换原列表为去重后的列表
             school.setVolunteerVOList(distinctList);
-            // 继续原有处理逻辑
-            distinctList.forEach(volunteerVO -> {
+            for (VolunteerVO volunteerVO : distinctList) {
                 Integer minRanking = volunteerVO.getScoreLineList().get(0).getMinRanking();
-                volunteerVO.setCategory(calculateCategory(minRanking, volunteerPageDTO.getRanking()));
-                volunteerVO.getScoreLineList().forEach(scoreLine -> {
-                    scoreLine.setScoreThanMe(volunteerPageDTO.getGrade() - scoreLine.getMinScore());
-                    scoreLine.setRankingThanMe(volunteerPageDTO.getRanking() - scoreLine.getMinRanking());
-                });
-            });
-        });
-        return manualPage(schoolVolunteerList, volunteerPageDTO.getTableId(), volunteerPageDTO.getPage(), volunteerPageDTO.getPageSize());
+                volunteerVO.setCategory(calculateCategory(minRanking, userRanking));
+                volunteerVO.setIsAdd(addedMajorIds.contains(volunteerVO.getMajorId()));
+                for (ScoreLine scoreLine : volunteerVO.getScoreLineList()) {
+                    scoreLine.setScoreThanMe(userGrade - scoreLine.getMinScore());
+                    scoreLine.setRankingThanMe(userRanking - scoreLine.getMinRanking());
+                }
+            }
+        }
+        // 第五步：schoolType 精确筛选（SQL 已按范围过滤，此处做最终确认）
+        List<SchoolVolunteer> resultList;
+        if (schoolType != null) {
+            resultList = new ArrayList<>();
+            for (SchoolVolunteer school : schoolVolunteerList) {
+                List<VolunteerVO> matchedMajors = school.getVolunteerVOList().stream()
+                        .filter(vo -> schoolType.equals(vo.getCategory()))
+                        .collect(Collectors.toList());
+                if (!matchedMajors.isEmpty()) {
+                    school.setVolunteerVOList(matchedMajors);
+                    resultList.add(school);
+                }
+            }
+        } else {
+            resultList = schoolVolunteerList;
+        }
+        return new PageResult<>(total, resultList);
     }
 
     /**
@@ -139,32 +169,6 @@ public class VolunteerServiceImpl implements VolunteerService {
             volunteerTable.setCount(volunteerMapper.getTableCount(volunteerTable.getTableId()));
         }
         return volunteerTables;
-    }
-
-    /**
-     * 人工分页
-     *
-     * @param filterCache 过滤后的学校缓存
-     * @param page        查询页码
-     * @param pageSize    每页大小
-     * @return PageResult<SchoolVO>
-     */
-    private PageResult<SchoolVolunteer> manualPage(List<SchoolVolunteer> filterCache, int tableId, int page, int pageSize) {
-        // 1.获取记录总数
-        int total = filterCache.size();
-        // 2.获取起始页码
-        int start = (page - 1) * pageSize;
-        if (start >= total) return new PageResult<>((long) total, Collections.emptyList());
-        // 3.获取结束页码
-        int end = Math.min(start + pageSize, total);
-        // 4.分页并返回
-        List<SchoolVolunteer> pageData = filterCache.subList(start, end);
-        for (SchoolVolunteer schoolVolunteer : pageData) {
-            for (VolunteerVO volunteerVO : schoolVolunteer.getVolunteerVOList()) {
-                volunteerVO.setIsAdd(volunteerMapper.checkVolunteer(volunteerVO.getMajorId(), tableId) != 0);
-            }
-        }
-        return new PageResult<>((long) total, pageData);
     }
 
     /**

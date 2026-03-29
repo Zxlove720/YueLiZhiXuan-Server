@@ -2,8 +2,62 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="a311.college.mapper.volunteer.VolunteerMapper">
-    <!-- 优化后的主查询SQL -->
-    <select id="selectVolunteerSchool" resultMap="schoolVolunteerMap">
+
+    <sql id="baseJoin">
+        tb_school s
+        JOIN tb_province p ON s.school_id = p.school_id
+        JOIN tb_year y ON p.province_id = y.province_id
+        JOIN tb_category c ON y.year_id = c.year_id
+        JOIN tb_batch b ON c.category_id = b.category_id
+        JOIN tb_score sc ON b.batch_id = sc.batch_id
+    </sql>
+
+    <sql id="scoreRangeCondition">
+        sc.first_choice = #{dto.firstChoice}
+        AND p.province_name = #{dto.province}
+        <choose>
+            <when test="dto.schoolType == 0">
+                AND sc.min_ranking &gt; #{dto.ranking} + 5000
+                AND sc.min_ranking &lt;= #{dto.ranking} + 10000
+            </when>
+            <when test="dto.schoolType == 1">
+                AND sc.min_ranking &gt;= #{dto.ranking} - 3000
+                AND sc.min_ranking &lt;= #{dto.ranking} + 5000
+            </when>
+            <when test="dto.schoolType == 2">
+                AND sc.min_ranking &gt;= #{dto.ranking} - 7500
+                AND sc.min_ranking &lt; #{dto.ranking} - 3000
+            </when>
+            <otherwise>
+                AND sc.min_ranking between #{dto.ranking} - 7500 and #{dto.ranking} + 10000
+            </otherwise>
+        </choose>
+    </sql>
+
+    <!-- 统计符合条件的学校总数（轻量查询） -->
+    <select id="countVolunteerSchools" resultType="long">
+        SELECT COUNT(DISTINCT s.school_id)
+        FROM <include refid="baseJoin"/>
+        `WHERE` <include refid="scoreRangeCondition"/>
+    </select>
+
+    <!-- 分页获取学校ID（只取当前页需要的学校） -->
+    <select id="selectPagedSchoolIds" resultType="int">
+        SELECT s.school_id
+        FROM <include refid="baseJoin"/>
+        `WHERE` <include refid="scoreRangeCondition"/>
+        GROUP BY s.school_id
+        <if test="dto.category == 1">
+            ORDER BY s.score DESC
+        </if>
+        <if test="dto.category == 2">
+            ORDER BY MAX(sc.min_score) DESC
+        </if>
+        `LIMIT` #{dto.pageSize} OFFSET #{offset}
+    </select>
+
+    <!-- 根据学校ID列表查询完整志愿信息（只查一页的数据量） -->
+    <select id="selectVolunteersBySchoolIds" resultMap="schoolVolunteerMap">
         SELECT
         s.school_id,
         s.school_head,
@@ -18,20 +72,17 @@
         y.year,
         sc.min_score,
         sc.min_ranking
-        FROM tb_school s
-        JOIN tb_province p ON s.school_id = p.school_id
-        JOIN tb_year y ON p.province_id = y.province_id
-        JOIN tb_category c ON y.year_id = c.year_id
-        JOIN tb_batch b ON c.category_id = b.category_id
-        JOIN tb_score sc ON b.batch_id = sc.batch_id
-        WHERE sc.first_choice = #{firstChoice}
-        AND p.province_name = #{province}
-        AND sc.min_ranking between #{ranking} - 7500 and #{ranking} + 10000
-        <if test="category == 1">
-            order by s.score desc
+        FROM <include refid="baseJoin"/>
+        `WHERE` s.school_id IN
+        <foreach item="id" collection="schoolIds" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        AND <include refid="scoreRangeCondition"/>
+        <if test="dto.category == 1">
+            ORDER BY s.score DESC
         </if>
-        <if test="category == 2">
-            order by sc.min_score desc
+        <if test="dto.category == 2">
+            `ORDER` BY sc.min_score DESC
         </if>
     </select>
 
@@ -62,13 +113,13 @@
         <result property="schoolProvince" column="school_province"/>
         <result property="rankList" column="rank_list"/>
         <collection property="volunteerVOList" ofType="a311.college.vo.volunteer.VolunteerVO">
-            <result property="majorId" column="major_id"/>
+            <id property="majorId" column="major_id"/>
             <result property="majorName" column="major_name"/>
             <result property="firstChoice" column="first_choice"/>
             <result property="otherChoice" column="other_choice"/>
             <result property="special" column="special"/>
             <collection property="scoreLineList" ofType="a311.college.vo.volunteer.ScoreLine">
-                <result property="year" column="year"/>
+                <id property="year" column="year"/>
                 <result property="minScore" column="min_score"/>
                 <result property="minRanking" column="min_ranking"/>
             </collection>

@@ -33,6 +33,9 @@ public class VolunteerPageDTO {
     @Schema(description = "查询方式（1为按学校、2为按专业）")
     private Integer category;
 
+    @Schema(description = "学校类型过滤（0=保底、1=稳妥、2=冲刺，null=不过滤）")
+    private Integer schoolType;
+
     @Schema(description = "起始页码")
     private Integer page = 1;
 
