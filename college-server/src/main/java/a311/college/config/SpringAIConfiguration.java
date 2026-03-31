@@ -18,6 +18,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
 
 
+
 /**
  * SpringAI配置类
  */
@@ -36,30 +37,43 @@ public class SpringAIConfiguration {
     @Value("classpath:prompt/information.txt")
     private Resource informationPrompt;
 
+    /**
+     * 以下是两个兼容OpenAI规范的模型的配置信息
+     * 因为项目中需要使用两个兼容OpenAI的模型，Spring无法自动配置，所以说只能手动读取配置信息，手动完成配置
+     */
+    // 豆包模型的BaseURL
     @Value("${college.ai.doubao.base-url}")
     private String doubaoBaseUrl;
 
+    // 豆包模型的ApiKey
     @Value("${college.ai.doubao.api-key}")
     private String doubaoApiKey;
 
+    // 豆包模型的具体型号
     @Value("${college.ai.doubao.model}")
     private String doubaoModel;
 
+    // 豆包模型的temperature
     @Value("${college.ai.doubao.temperature:0.3}")
     private Double doubaoTemperature;
 
+    // Qwen模型的BaseUrl
     @Value("${college.ai.qwen.base-url}")
     private String qwenBaseUrl;
 
+    // Qwen模型的ApiKey
     @Value("${college.ai.qwen.api-key}")
     private String qwenApiKey;
 
+    // Qwen模型的具体型号
     @Value("${college.ai.qwen.model}")
     private String qwenModel;
 
+    // Qwen模型的temperature
     @Value("${college.ai.qwen.temperature:0.7}")
     private Double qwenTemperature;
 
+    // doubao-1-5-lite-32k-250115
     @Bean("doubaoChatModel")
     public OpenAiChatModel doubaoChatModel() {
         OpenAiApi api = OpenAiApi.builder()
@@ -79,6 +93,7 @@ public class SpringAIConfiguration {
                 .build();
     }
 
+    // qwen3.5-flash
     @Bean("qwenChatModel")
     public OpenAiChatModel qwenChatModel() {
         OpenAiApi api = OpenAiApi.builder()

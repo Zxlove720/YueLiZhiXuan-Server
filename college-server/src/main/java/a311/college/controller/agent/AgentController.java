@@ -42,7 +42,7 @@ public class AgentController {
      */
     @RequestMapping("/chat")
     public Flux<String> chat(@RequestParam(defaultValue = "你好") String prompt, @RequestParam @NotNull String conversationId) {
-        return agentUtil.chatWithThink(prompt, conversationId);
+        return agentUtil.chatWithAgent(prompt, conversationId);
     }
 
     /**

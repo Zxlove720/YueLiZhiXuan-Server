@@ -7,8 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
-import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.deepseek.DeepSeekAssistantMessage;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -64,16 +62,17 @@ public class AgentUtil {
     }
 
     /**
-     * 和大模型对话并深度思考
+     * 和大模型对话并工具调用
      * <p>
-     * 用户和大模型对话，支持会话记忆和深度思考
+     * 用户和大模型对话，支持会话记忆和工具调用。
      * </p>
      *
-     * @param prompt 提示词
+     * @param prompt         提示词
      * @param conversationId 对话id
-     * @return Flux<String> 流式输出的回答
+     * @return Flux<String>  流式输出
      */
-    public Flux<String> chatWithThink(String prompt, @NotNull String conversationId) {
+    public Flux<String> chatWithAgent(String prompt, @NotNull String conversationId) {
+        // 判断是否需要创建对话记录ChatRecord
         ChatRecord chatRecordDetail = agentService.getChatRecordDetail(conversationId);
         if (chatRecordDetail == null) {
             log.info("conversationId：{}在数据库中不存在，需要创建会话记录", conversationId);
