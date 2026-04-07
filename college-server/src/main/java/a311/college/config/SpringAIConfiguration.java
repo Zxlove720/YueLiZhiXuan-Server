@@ -141,7 +141,7 @@ public class SpringAIConfiguration {
         // MessageWindowChatMemory 固定窗口大小的会话记忆，相当于在一个窗口中保存会话记忆，当消息数超过窗口最大值时，将删除较旧消息
         return MessageWindowChatMemory.builder()
                 .chatMemoryRepository(chatMemoryRepository)
-                .maxMessages(30)
+                .maxMessages(50)
                 .build();
     }
 

@@ -38,7 +38,7 @@ public class VolunteerQuery {
         dto.setCategory(this.category);
         dto.setSchoolType(this.schoolType);
         dto.setPage(1);
-        dto.setPageSize(10);
+        dto.setPageSize(50);
         return dto;
     }
 

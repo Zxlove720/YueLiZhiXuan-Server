@@ -13,8 +13,10 @@
     </sql>
 
     <sql id="scoreRangeCondition">
-        sc.first_choice = #{dto.firstChoice}
-        AND p.province_name = #{dto.province}
+        p.province_name = #{dto.province}
+        <if test="dto.firstChoice != null">
+            AND sc.first_choice = #{dto.firstChoice}
+        </if>
         <choose>
             <when test="dto.schoolType == 0">
                 AND sc.min_ranking &gt; #{dto.ranking} + 5000

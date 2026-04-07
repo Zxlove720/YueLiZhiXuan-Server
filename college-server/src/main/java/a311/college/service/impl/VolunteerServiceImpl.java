@@ -122,6 +122,8 @@ public class VolunteerServiceImpl implements VolunteerService {
             log.info("重名的志愿表");
             throw new VolunteerException("重名的志愿表");
         }
+        ThreadLocalUtil.setCurrentId(userId);
+        System.out.println(userId);
         volunteerTable.setUserId(ThreadLocalUtil.getCurrentId());
         volunteerTable.setCreateTime(LocalDateTime.now());
         volunteerMapper.createVolunteerTable(volunteerTable);

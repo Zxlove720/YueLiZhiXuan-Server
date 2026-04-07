@@ -72,6 +72,8 @@ public class AgentUtil {
      * @return Flux<String>  流式输出
      */
     public Flux<String> chatWithAgent(String prompt, @NotNull String conversationId) {
+        // 在 HTTP 请求线程上捕获 userId，后续工具调用会切换到 boundedElastic 线程，ThreadLocal 不会传递
+        Long userId = ThreadLocalUtil.getCurrentId();
         // 判断是否需要创建对话记录ChatRecord
         ChatRecord chatRecordDetail = agentService.getChatRecordDetail(conversationId);
         if (chatRecordDetail == null) {
@@ -79,7 +81,7 @@ public class AgentUtil {
             // 构造会话记录
             ChatRecord chatRecord = new ChatRecord();
             chatRecord.setConversationId(conversationId);
-            chatRecord.setUserId(ThreadLocalUtil.getCurrentId());
+            chatRecord.setUserId(userId);
             chatRecord.setTitle(prompt.length() >= 10 ? prompt.substring(0, 10): prompt);
             chatRecord.setCreateTime(LocalDateTime.now());
             // 保存会话记录
@@ -90,6 +92,8 @@ public class AgentUtil {
                 // ChatMemory是根据conversationId来区分不同会话的，所以说为了区分不同对话，需要在发送请求的时候携带会话id
                 .advisors(advisorSpec -> advisorSpec
                         .param(ChatMemory.CONVERSATION_ID, conversationId))
+                // 将 userId 注入工具上下文，工具执行时从 ToolContext 中取出，规避 ThreadLocal 跨线程丢失问题
+                .toolContext(java.util.Map.of("userId", userId))
                 .stream()
                 .content();
     }
