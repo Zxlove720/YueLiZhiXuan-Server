@@ -14,7 +14,7 @@ public class VolunteerQuery {
     @ToolParam(description = "用户所在省份")
     private ProvinceEnum province;
 
-    @ToolParam(required = false, description = "用户首选科目")
+    @ToolParam(description = "用户首选科目")
     private String firstChoice;
 
     @ToolParam(description = "用户高考成绩")
@@ -38,7 +38,7 @@ public class VolunteerQuery {
         dto.setCategory(this.category);
         dto.setSchoolType(this.schoolType);
         dto.setPage(1);
-        dto.setPageSize(50);
+        dto.setPageSize(200);
         return dto;
     }
 

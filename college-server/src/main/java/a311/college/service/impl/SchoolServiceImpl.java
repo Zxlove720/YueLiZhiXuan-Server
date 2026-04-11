@@ -26,13 +26,14 @@ import a311.college.vo.major.MajorSimpleVO;
 import a311.college.vo.school.*;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.RandomUtil;
+import com.alibaba.fastjson.JSON;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.math3.distribution.NormalDistribution;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -58,8 +59,8 @@ public class SchoolServiceImpl implements SchoolService {
         this.majorMapper = majorMapper;
     }
 
-    @Resource
-    private RedisTemplate<String, School> redisTemplate;
+    @Resource(name = "stringRedisTemplate")
+    private StringRedisTemplate redisTemplate;
 
     /**
      * 学校信息分页查询
@@ -74,27 +75,30 @@ public class SchoolServiceImpl implements SchoolService {
         String rankList = "";
         if (rank != null) {
             rankList = schoolPageQueryDTO.getRankList().toString().
-                    replaceAll("\\[", "").replaceAll("]", "");
+                    replaceAll("\\[", "").replace("]", "");
             if (rankList.contains("中央部委")) {
-                List<School> schoolCache = redisTemplate.opsForList().range(SchoolRedisKey.CENTER_CACHE_KEY, 0, -1);
-                if (schoolCache != null && !schoolCache.isEmpty()) {
+                String cached = redisTemplate.opsForValue().get(SchoolRedisKey.CENTER_CACHE_KEY);
+                if (cached != null && !cached.isEmpty()) {
                     log.info("缓存命中中央部委学校");
+                    List<School> schoolCache = JSON.parseArray(cached, School.class);
                     List<School> filterCache = filterHot(schoolCache, schoolPageQueryDTO);
                     return manualPage(filterCache, schoolPageQueryDTO.getPage(), schoolPageQueryDTO.getPageSize());
                 }
             }
             if (rankList.contains("C9联盟")) {
-                List<School> schoolCache = redisTemplate.opsForList().range(SchoolRedisKey.C9_CACHE_KEY, 0, -1);
-                if (schoolCache != null && !schoolCache.isEmpty()) {
+                String cached = redisTemplate.opsForValue().get(SchoolRedisKey.C9_CACHE_KEY);
+                if (cached != null && !cached.isEmpty()) {
                     log.info("缓存命中C9联盟");
+                    List<School> schoolCache = JSON.parseArray(cached, School.class);
                     List<School> filterCache = filterHot(schoolCache, schoolPageQueryDTO);
                     return manualPage(filterCache, schoolPageQueryDTO.getPage(), schoolPageQueryDTO.getPageSize());
                 }
             }
             if (rankList.contains("国防七子")) {
-                List<School> schoolCache = redisTemplate.opsForList().range(SchoolRedisKey.DEFENSE_CACHE_KEY, 0, -1);
-                if (schoolCache != null && !schoolCache.isEmpty()) {
+                String cached = redisTemplate.opsForValue().get(SchoolRedisKey.DEFENSE_CACHE_KEY);
+                if (cached != null && !cached.isEmpty()) {
                     log.info("缓存命中国防七子");
+                    List<School> schoolCache = JSON.parseArray(cached, School.class);
                     List<School> filterCache = filterHot(schoolCache, schoolPageQueryDTO);
                     return manualPage(filterCache, schoolPageQueryDTO.getPage(), schoolPageQueryDTO.getPageSize());
                 }
@@ -104,11 +108,12 @@ public class SchoolServiceImpl implements SchoolService {
         // 2.根据查询条件，判断是否命中热点地区学校缓存
         // 2.1封装key
         String key = SchoolRedisKey.SCHOOL_CACHE_KEY + schoolPageQueryDTO.getProvince() + ":";
-        List<School> schoolCache = redisTemplate.opsForList().range(key, 0, -1);
-        if (schoolCache != null && !schoolCache.isEmpty()) {
+        String cachedJson = redisTemplate.opsForValue().get(key);
+        if (cachedJson != null && !cachedJson.isEmpty()) {
             // 2.2成功从缓存中获取数据
             log.info("缓存命中");
             // 2.3根据查询条件进行过滤
+            List<School> schoolCache = JSON.parseArray(cachedJson, School.class);
             List<School> filterCache = filterSchools(schoolCache, schoolPageQueryDTO, rankList);
             // 2.4手动进行分页并返回
             return manualPage(filterCache, schoolPageQueryDTO.getPage(), schoolPageQueryDTO.getPageSize());
@@ -192,9 +197,9 @@ public class SchoolServiceImpl implements SchoolService {
                 List<School> school = schoolMapper.selectAllSchoolByProvince(area);
                 // 2. 删除旧缓存（避免残留旧数据）
                 redisTemplate.delete(key);
-                // 3. 批量插入新数据（使用rightPushAll）
+                // 3. 批量插入新数据（使用JSON字符串存储）
                 if (!school.isEmpty()) {
-                    redisTemplate.opsForList().rightPushAll(key, school);
+                    redisTemplate.opsForValue().set(key, JSON.toJSONString(school));
                     log.info("热点地区 {} 缓存预热成功，共 {} 条数据", area, school.size());
                 } else {
                     log.warn("热点地区 {} 无数据，跳过缓存预热", area);
@@ -255,9 +260,9 @@ public class SchoolServiceImpl implements SchoolService {
     private void addCache(List<School> schoolList, String key) {
         // 1.删除缓存的旧数据
         redisTemplate.delete(key);
-        // 2.缓存新的热门学校数据
+        // 2.缓存新的热门学校数据（使用JSON字符串存储）
         if (!schoolList.isEmpty()) {
-            redisTemplate.opsForList().rightPushAll(key, schoolList);
+            redisTemplate.opsForValue().set(key, JSON.toJSONString(schoolList));
             log.info("{}缓存成功", key);
         } else {
             log.warn("没有该类型的热门学校，缓存失败");

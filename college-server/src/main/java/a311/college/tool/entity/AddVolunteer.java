@@ -1,45 +1,23 @@
 package a311.college.tool.entity;
 
 import lombok.Data;
-import a311.college.dto.volunteer.AddVolunteerDTO;
 import org.springframework.ai.tool.annotation.ToolParam;
 
+import java.util.List;
+
+/**
+ * 添加志愿工具参数
+ * <p>
+ * LLM 只需传入推荐结果中的序号列表，完整数据由工具从 Redis 中自动查找。
+ * </p>
+ */
 @Data
 public class AddVolunteer {
 
-    @ToolParam(description = "志愿表id")
+    @ToolParam(description = "要添加的志愿序号列表，序号来自志愿推荐结果")
+    private List<Integer> indexes;
+
+    @ToolParam(required = false, description = "志愿表id，不提供则自动使用最近创建的志愿表")
     private Integer tableId;
-
-    @ToolParam(description = "专业id")
-    private Integer majorId;
-
-    @ToolParam(description = "所属类型")
-    private Integer category;
-
-    @ToolParam(description = "招生年份")
-    private Integer year;
-
-    @ToolParam(description = "最低分数")
-    private Integer minScore;
-
-    @ToolParam(description = "最低位次")
-    private Integer minRanking;
-
-    @ToolParam(description = "最低分与用户相比")
-    private Integer scoreThanMe;
-
-    @ToolParam(description = "最低位次与用户相比")
-    private Integer rankingThanMe;
-
-    public AddVolunteerDTO toAddVolunteerDTO() {
-        AddVolunteerDTO dto = new AddVolunteerDTO();
-        dto.setTableId(tableId);
-        dto.setMajorId(majorId);
-        dto.setCategory(category);
-        dto.setYear(year);
-        dto.setMinScore(minScore);
-        dto.setMinRanking(minRanking);
-        return dto;
-    }
 
 }

@@ -42,7 +42,7 @@
         <volcengine.version>0.2.6</volcengine.version>
         <commons.text.version>1.10.0</commons.text.version>
         <commonmark.version>0.22.0</commonmark.version>
-        <spring-ai.version>1.0.4</spring-ai.version>
+        <spring-ai.version>1.0.5</spring-ai.version>
     </properties>
 
     <modules>

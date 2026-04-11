@@ -13,8 +13,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import reactor.core.publisher.Flux;
 
 import javax.validation.constraints.NotNull;
+import java.util.HashMap;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 大模型相关工具类
@@ -93,7 +95,9 @@ public class AgentUtil {
                 .advisors(advisorSpec -> advisorSpec
                         .param(ChatMemory.CONVERSATION_ID, conversationId))
                 // 将 userId 注入工具上下文，工具执行时从 ToolContext 中取出，规避 ThreadLocal 跨线程丢失问题
-                .toolContext(java.util.Map.of("userId", userId))
+                // 将 conversationId 注入工具上下文，因为ToolContext是一个只读的Map，所以说不能直接往里面写不同工具调用后返回的数据
+                // 所以说需要传递 conversationId 区分不同对话，然后将工具调用返回的数据保存到Redis中当作上下文存储
+                .toolContext(new HashMap<>(Map.of("userId", userId, "conversationId", conversationId)))
                 .stream()
                 .content();
     }

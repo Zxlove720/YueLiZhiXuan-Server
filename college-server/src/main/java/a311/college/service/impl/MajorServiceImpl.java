@@ -26,12 +26,13 @@ import a311.college.vo.major.DetailMajorVO;
 import a311.college.vo.school.CommentVO;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.RandomUtil;
+import com.alibaba.fastjson.JSON;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -53,8 +54,8 @@ public class MajorServiceImpl implements MajorService {
         this.schoolMapper = schoolMapper;
     }
 
-    @Resource
-    private RedisTemplate<String, Major> redisTemplate;
+    @Resource(name = "stringRedisTemplate")
+    private StringRedisTemplate redisTemplate;
 
     /**
      * 查询学科门类
@@ -94,10 +95,11 @@ public class MajorServiceImpl implements MajorService {
         // 判断是否命中缓存
         // 拼装Key
         String key = MajorRedisKey.MAJOR_CACHE_KEY + majorPageQueryDTO.getProfessionalClassId() + ":";
-        List<Major> majorCache = redisTemplate.opsForList().range(key, 0, -1);
-        if (majorCache != null && !majorCache.isEmpty()) {
+        String cachedJson = redisTemplate.opsForValue().get(key);
+        if (cachedJson != null && !cachedJson.isEmpty()) {
             log.info("缓存命中");
             // 2.2手动进行分页并返回
+            List<Major> majorCache = JSON.parseArray(cachedJson, Major.class);
             return manualPage(majorCache, majorPageQueryDTO.getPage(), majorPageQueryDTO.getPageSize());
         }
         try (Page<Major> page = PageHelper.startPage(majorPageQueryDTO.getPage(), majorPageQueryDTO.getPageSize())) {
@@ -152,7 +154,7 @@ public class MajorServiceImpl implements MajorService {
                 // 获取专业专业
                 List<Major> majorList = majorMapper.selectAllMajor(professionalClass);
                 if (!majorList.isEmpty()) {
-                    redisTemplate.opsForList().rightPushAll(key, majorList);
+                    redisTemplate.opsForValue().set(key, JSON.toJSONString(majorList));
                     log.info("专业分类 {} 缓存预热成功，共 {} 条数据", professionalClass, majorList.size());
                 } else {
                     log.warn("专业分类{}无数据，跳过缓存预热", professionalClass);

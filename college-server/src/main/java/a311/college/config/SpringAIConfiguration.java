@@ -93,7 +93,6 @@ public class SpringAIConfiguration {
                 .build();
     }
 
-    // qwen3.5-flash
     @Bean("qwenChatModel")
     public OpenAiChatModel qwenChatModel() {
         OpenAiApi api = OpenAiApi.builder()
