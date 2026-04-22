@@ -4,13 +4,18 @@ import a311.college.tool.ToolCalling;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
+import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepository;
 import org.springframework.ai.deepseek.DeepSeekChatModel;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.ai.openai.OpenAiEmbeddingModel;
 import org.springframework.ai.openai.api.OpenAiApi;
+import org.springframework.ai.vectorstore.SearchRequest;
+import org.springframework.ai.vectorstore.SimpleVectorStore;
+import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -144,6 +149,18 @@ public class SpringAIConfiguration {
                 .build();
     }
 
+    /**
+     * 创建向量数据库
+     * 使用Spring提供的SimpleVectorStore，基于内存实现
+     *
+     * @param openAiEmbeddingModel  向量模型
+     * @return VectorStore 向量数据库
+     */
+    @Bean
+    public VectorStore vectorStore(OpenAiEmbeddingModel openAiEmbeddingModel) {
+        return SimpleVectorStore.builder(openAiEmbeddingModel).build();
+    }
+
 //    /**
 //     * 创建ChatClient
 //     * <p>
@@ -195,11 +212,24 @@ public class SpringAIConfiguration {
      * @return chatClient chatClient实体
      */
     @Bean
-    public ChatClient agentChatClient(@Qualifier("qwenChatModel") OpenAiChatModel chatModel, ChatMemory chatMemory, ToolCalling toolCalling) {
+    public ChatClient agentChatClient(@Qualifier("qwenChatModel") OpenAiChatModel chatModel, ChatMemory chatMemory, ToolCalling toolCalling, VectorStore vectorStore) {
         return ChatClient
                 .builder(chatModel)
                 .defaultSystem(systemPrompt)
-                .defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build(), SimpleLoggerAdvisor.builder().build())
+                .defaultAdvisors(
+                        MessageChatMemoryAdvisor.builder(chatMemory).build(),
+                        SimpleLoggerAdvisor.builder().build(),
+                        QuestionAnswerAdvisor
+                                .builder(vectorStore)
+                                .searchRequest(SearchRequest
+                                        // 向量检索的请求参数
+                                        .builder()
+                                        // 相似度阈值
+                                        .similarityThreshold(0.3d)
+                                        // 返回相似文档的片段
+                                        .topK(2)
+                                        .build())
+                                .build())
                 .defaultTools(toolCalling)
                 .build();
     }
