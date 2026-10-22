@@ -1,5 +1,5 @@
 server:
-  port: 8081
+  port: 8080
 
 spring:
   application:
@@ -134,8 +134,8 @@ knife4j:
     swagger-model-name: 实体列表
   basic:
     enable: true
-    username: root
-    password: 123456
+    username: ${knife4j.basic.username}
+    password: ${knife4j.basic.password}
 
 
 
