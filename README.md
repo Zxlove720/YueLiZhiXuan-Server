@@ -1,8 +1,8 @@
-# 跃鲤志选 · 服务端
+# 跃鲤志选
 
-跃鲤志选是一个面向高考志愿填报场景的后端项目，提供院校与专业查询、历年分数线查询、志愿表管理、收藏评论和 AI 咨询功能。项目基于 Java 17、Spring Boot 和 Spring AI，结合 MySQL、Redis 与 PDF 知识库，为前端提供业务接口和流式对话服务。
+跃鲤志选是一个面向高考志愿填报场景的前后端分离项目，提供院校与专业查询、历年分数线可视化、模拟填报、志愿表管理、收藏评论和 AI 咨询功能。前端使用 Vue 3、TypeScript 和 Vite，后端基于 Java 17、Spring Boot 和 Spring AI，结合 MySQL、Redis 与 PDF 知识库，提供业务接口和流式对话服务。
 
-本仓库包含服务端代码；前端、完整的业务数据库结构与院校数据需要单独准备。
+本 README 同时介绍后端和配套的 `College-web` 前端。本仓库当前包含后端源码，前端源码单独维护；完整的业务数据库结构与院校数据也需要单独准备。
 
 ## 主要功能
 
@@ -14,10 +14,13 @@
 | 志愿表 | 创建、重命名、清空与删除志愿表，添加和删除志愿，AI 分析志愿表 |
 | 用户与互动 | 注册登录、个人资料、院校与专业收藏、评论、密码修改和账号注销 |
 | AI 咨询 | “高考小鲤”流式对话、会话记录、上下文记忆、志愿推荐与志愿表工具调用 |
+| 前端展示 | 院校与专业筛选、分数线趋势图、录取预测仪表盘、AI 内容抽屉和个人中心 |
 | 知识库 | 启动时读取指定目录的 PDF，构建内存向量库，为 AI 对话提供检索上下文 |
 | 图片上传 | 通过阿里云 OSS 保存头像等图片 |
 
 ## 技术栈
+
+### 后端
 
 以下版本来自当前仓库的 Maven 配置。
 
@@ -35,7 +38,26 @@
 | 阿里云 OSS SDK | 3.17.4，图片存储 |
 | Maven | 多模块构建与依赖管理 |
 
+### 前端
+
+以下版本来自配套 `College-web/package-lock.json`；安装时以该锁文件为准。
+
+| 技术 | 版本 / 用途 |
+| --- | --- |
+| Vue | 3.5.43，页面与组件 |
+| TypeScript | 5.6.3，类型检查 |
+| Vite | 5.4.21，开发服务与生产构建 |
+| Vue Router | 4.6.4，History 模式路由与登录守卫 |
+| Pinia | 2.3.1，用户与应用状态 |
+| Axios | 1.20.0，业务请求、响应解包与令牌刷新 |
+| Tailwind CSS | 3.4.19，样式与主题配置 |
+| ECharts | 5.6.0，分数线趋势图与录取预测仪表盘 |
+| Marked / DOMPurify | 18.0.14 / 3.4.16，AI 富文本渲染与 HTML 清理 |
+| Vitest / jsdom | 2.1.9 / 30.1.1，工具函数与富文本单元测试 |
+
 ## 项目结构
+
+### 后端（本仓库）
 
 ```text
 .
@@ -63,6 +85,63 @@
             └── sql/agent.sql      # Spring AI 对话记忆表
 ```
 
+### 前端（独立的 College-web 目录）
+
+下面的路径均相对于前端目录，前端源码不在本仓库内。
+
+```text
+College-web/
+├── package.json                    # dev、build、preview、test 命令
+├── package-lock.json               # npm 依赖锁文件
+├── vite.config.ts                  # 开发端口、/api 代理与构建分包
+├── tailwind.config.ts              # 色板、字体、组件样式与动画
+├── index.html
+├── docs/                           # 页面结构、设计、接口和部署说明
+├── scripts/                        # 浏览器检查与回归脚本
+└── src/
+    ├── main.ts                     # 应用入口，注册 Router 与 Pinia
+    ├── App.vue
+    ├── router/                     # 路由与登录访问控制
+    ├── layouts/                    # 导航、页脚与页面布局
+    ├── views/                      # 首页、院校、专业、志愿、AI、用户页面
+    ├── components/
+    │   ├── ui/                     # 按钮、表单、表格、弹窗、抽屉等组件
+    │   ├── charts/                 # ECharts 图表
+    │   ├── home/                   # 首页搜索与热门推荐
+    │   ├── school/                 # 分数线、预测、评论和 AI 介绍
+    │   ├── layout/                 # 导航组件
+    │   └── decor/                  # 山、水、云等装饰组件
+    ├── api/                        # HTTP 封装、令牌管理与业务接口
+    ├── stores/                     # 用户与省份等全局状态
+    ├── types/                      # 接口类型
+    ├── constants/                  # 省份、选科等选项
+    ├── styles/                     # 全局样式
+    └── utils/                      # 流式读取、富文本、格式化与单元测试
+```
+
+## 前端页面与交互
+
+前端采用锦鲤朱红、墨蓝、鎏金与宣纸米白配色，配合中文衬线标题、卡片和抽屉组织信息。页面路由以 `College-web/src/router/index.ts` 为准。
+
+| 页面 | 路由 | 主要内容 | 登录要求 |
+| --- | --- | --- | --- |
+| 首页 | `/` | 院校搜索、热门院校与专业、排行榜和强基计划入口 | 无 |
+| 院校库 | `/schools` | 关键词、省份、年份、选科与分数等条件筛选 | 无 |
+| 院校详情 | `/schools/:id` | 院校资料、专业、分数线、录取预测、收藏评论与 AI 介绍 | 需要 |
+| 专业库 / 专业详情 | `/majors`、`/majors/:id` | 按学历层次、学科门类与专业类别查询，查看开设院校和 AI 介绍 | 需要 |
+| 模拟填报 | `/volunteer` | 志愿表管理、推荐志愿、冲稳保分类与 AI 分析报告 | 需要 |
+| 强基计划 | `/basic-plan` | 强基计划院校查询与详情入口 | 无 |
+| AI 助手 | `/assistant` | 新建会话、历史记录、流式回复与停止生成 | 需要 |
+| 个人中心 | `/profile` | 头像、个人资料、成绩位次、收藏、评论与账号注销 | 需要 |
+| 登录 / 注册 / 找回密码 | `/login`、`/register`、`/find-password` | 账号登录、注册与密码找回 | 无 |
+| 组件演示 | `/demo` | 主题色、表单与通用组件展示，仅在开发模式注册 | 无 |
+
+- 图表由 ECharts 绘制，展示历年分数、位次趋势与后端返回的录取预测结果。
+- 普通请求通过 Axios 自动携带访问令牌、解包 `responseData`；遇到 401 时尝试刷新令牌并重试，失败后引导重新登录。
+- AI 助手通过 Fetch 读取流式响应，支持分块纯文本与 SSE 格式识别，并提供逐字显示效果和中止操作。
+- AI 返回的 Markdown 或 HTML 经 Marked、DOMPurify 处理后展示；院校介绍、专业介绍和志愿分析使用抽屉呈现。
+- 页面包含加载占位、空状态、重试入口及统一 Toast；用户资料与令牌会在浏览器本地保存，并同步部分跨标签页状态。
+
 ## AI 如何分工
 
 | 能力 | 调用入口 | 模型与配置 |
@@ -75,7 +154,7 @@
 
 ```mermaid
 flowchart LR
-    Client[前端] --> API[业务接口]
+    Client[Vue 前端] --> API[Spring Boot 业务接口]
     API --> DB[(MySQL)]
     API --> Cache[(Redis)]
     API --> Single[DeepSeek 单次分析]
@@ -92,7 +171,7 @@ flowchart LR
 
 对话记忆由 MySQL 持久化，窗口最多保留 50 条消息。知识库使用 `SimpleVectorStore`，检索最多取 2 个片段，相似度阈值为 0.3；向量数据只保存在内存中，重启后重新导入。
 
-## 本地运行
+## 后端本地运行
 
 ### 1. 准备环境和数据
 
@@ -203,6 +282,99 @@ java -jar college-server/target/college-server-0.0.1-SNAPSHOT.jar --college.pdf.
 ```
 
 启动时仅扫描该目录的直接子文件，按页读取 PDF 并调用 Embedding 模型构建向量。目录不存在或没有 PDF 时会跳过导入；单个文件导入失败会记录日志。新增或替换 PDF 后需要重启服务才能重新加载。
+
+## 前端本地运行与联调
+
+### 1. 准备前端目录与 Node.js
+
+单独取得 `College-web` 源码后，可将它与后端目录放在同一级：
+
+```text
+project/
+├── College/                        # 后端目录
+└── College-web/                    # 前端目录
+```
+
+使用 Node.js **22.22.2 或更高的 22.x 版本**，或者 **24.15.0 或更高的 24.x 版本**，并使用 npm 安装依赖。该版本要求依据当前锁文件中的 `jsdom 30.1.1`；仅满足 Vite 的 Node.js 要求不足以覆盖测试依赖。
+
+在前端目录执行：
+
+```bash
+npm ci
+npm run dev
+```
+
+开发页面地址为 `http://127.0.0.1:5380`。当前 Vite 使用固定端口并开启 `strictPort`，端口占用时会报错，不会自动切换。
+
+### 2. 对齐前后端端口
+
+当前两端的配置如下：
+
+| 配置位置 | 当前值 | 说明 |
+| --- | --- | --- |
+| 后端 `application.yml` | `8080` | Spring Boot 默认端口 |
+| 前端 `vite.config.ts` | `127.0.0.1:5380` | 浏览器访问地址 |
+| 前端 `/api` 代理目标 | `http://localhost:8081` | 转发时去掉 `/api` 前缀 |
+| 前端请求基础路径 | `/api` | Axios 与 AI 流式请求共用，可由 `VITE_API_BASE` 覆盖 |
+
+**直接按现有前端代理联调时，将后端启动在 8081：**
+
+```bash
+# 在后端目录执行，环境变量与数据库配置同上
+java -jar college-server/target/college-server-0.0.1-SNAPSHOT.jar --server.port=8081
+```
+
+此时浏览器请求 `/api/users/login`，Vite 将其转发到 `http://localhost:8081/users/login`。如果后端继续使用默认的 `8080`，则需要将前端 `vite.config.ts` 的代理目标同步改为 `http://localhost:8080`。
+
+前端默认走 `/api`，无需另填接口地址。如需显式配置，可在前端 `.env.development` 中写入：
+
+```dotenv
+VITE_API_BASE=/api
+```
+
+也可以将 `VITE_API_BASE` 设为实际后端地址，直接跨域请求；此时需要配置后端的 `COLLEGE_CORS_ORIGINS`。前端环境变量会进入浏览器构建产物，只用于接口地址等公开配置，AI Key、数据库密码和 OSS 凭据均由后端持有。
+
+### 3. 构建、测试与部署
+
+以下命令均在 `College-web` 目录执行：
+
+| 命令 | 用途 |
+| --- | --- |
+| `npm run dev` | 启动 Vite 开发服务 |
+| `npm run build` | 先执行 `vue-tsc --noEmit` 类型检查，再构建到 `dist/` |
+| `npm run preview` | 在本地预览构建产物，地址以终端输出为准 |
+| `npm test` | 执行 Vitest；当前包含格式化、UUID 与富文本处理等工具测试 |
+
+部署时将 `dist/` 交给静态 Web 服务，并配置两个入口：
+
+- 前端使用 Vue Router History 模式，页面路径需要回退到 `index.html`，避免刷新详情页时返回 404。
+- `/api/` 需要反向代理到实际后端地址，并移除 `/api` 前缀；AI 流式响应需要关闭代理缓冲。
+
+下面的 Nginx 示例与上述后端 `8081` 联调端口一致，部署时按实际目录与端口调整：
+
+```nginx
+server {
+    listen 80;
+    server_name example.com;
+    root /var/www/college-web/dist;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    location /api/ {
+        proxy_pass http://127.0.0.1:8081/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_buffering off;
+        proxy_cache off;
+        proxy_read_timeout 300s;
+    }
+}
+```
+
+生产环境如需覆盖接口地址，在前端 `.env.production` 设置 `VITE_API_BASE` 后重新构建；它不是部署 JAR 时读取的后端环境变量。
 
 ## 接口接入
 
