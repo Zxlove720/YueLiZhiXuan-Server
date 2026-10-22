@@ -33,7 +33,7 @@
         <fastjson.version>1.2.83</fastjson.version>
         <aliyun.sdk.oss.version>3.17.4</aliyun.sdk.oss.version>
         <jaxb-api.version>2.3.1</jaxb-api.version>
-        <jjwt.version>0.9.1</jjwt.version>
+        <jjwt.version>0.12.6</jjwt.version>
         <knife4j.version>4.5.0</knife4j.version>
         <pageHelper.version>2.1.0</pageHelper.version>
         <hutool.version>5.8.22</hutool.version>
@@ -108,10 +108,25 @@
                 <version>${jaxb-api.version}</version>
             </dependency>
 
+            <!-- jjwt 0.12.x 拆分为 api / impl / jackson 三个坐标 -->
             <dependency>
                 <groupId>io.jsonwebtoken</groupId>
-                <artifactId>jjwt</artifactId>
+                <artifactId>jjwt-api</artifactId>
                 <version>${jjwt.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-impl</artifactId>
+                <version>${jjwt.version}</version>
+                <scope>runtime</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-jackson</artifactId>
+                <version>${jjwt.version}</version>
+                <scope>runtime</scope>
             </dependency>
 
             <dependency>

@@ -25,6 +25,12 @@
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
 
+        <!-- 用于在序列化时屏蔽敏感字段（如密码散列） -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>com.github.xiaoymin</groupId>
             <artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>

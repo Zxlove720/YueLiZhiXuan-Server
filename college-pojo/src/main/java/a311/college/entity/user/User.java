@@ -1,6 +1,7 @@
 package a311.college.entity.user;
 
 import a311.college.enumeration.ProvinceEnum;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -31,7 +32,12 @@ public class User implements Serializable {
     @Schema(description = "用户名")
     private String username;
 
-    @Schema(description = "用户密码")
+    /**
+     * 用户密码散列
+     * 使用 @JsonIgnore 保证任何返回 User 的接口都不会把密码散列序列化给前端
+     */
+    @JsonIgnore
+    @Schema(description = "用户密码", accessMode = Schema.AccessMode.WRITE_ONLY)
     private String password;
 
     @Schema(description = "用户手机号")

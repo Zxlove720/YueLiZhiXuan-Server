@@ -31,6 +31,16 @@ public interface ChatRecordMapper {
     ChatRecord findRecordByConversationId(@Param("conversationId") String conversationId);
 
     /**
+     * 按会话id + 用户id 联查，用于会话归属校验（防止越权读写他人会话）
+     *
+     * @param conversationId 会话id
+     * @param userId         当前登录用户id
+     * @return 会话记录，null 表示该会话不属于该用户
+     */
+    @Select("SELECT conversation_id, user_id FROM tb_agent_chat_record WHERE conversation_id = #{conversationId} AND user_id = #{userId}")
+    ChatRecord findOwnedRecord(@Param("conversationId") String conversationId, @Param("userId") Long userId);
+
+    /**
      * 新增会话记录
      *
      * @param record 会话记录

@@ -8,11 +8,14 @@ import a311.college.dto.ai.SchoolAIRequestDTO;
 import a311.college.dto.volunteer.AnalyseDTO;
 import a311.college.entity.agent.ChatRecord;
 import a311.college.entity.volunteer.Volunteer;
+import a311.college.exception.OperateNotAllowException;
+import a311.college.exception.volunteer.VolunteerException;
 import a311.college.mapper.agent.ChatRecordMapper;
 import a311.college.mapper.major.MajorMapper;
 import a311.college.mapper.school.SchoolMapper;
 import a311.college.mapper.volunteer.VolunteerMapper;
 import a311.college.service.AgentService;
+import a311.college.thread.ThreadLocalUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.context.annotation.Lazy;
@@ -72,8 +75,12 @@ public class AgentServiceImpl implements AgentService {
      */
     @Override
     public AgentMessageVO schoolInformation(SchoolAIRequestDTO schoolAIRequestDTO) {
-        // 1.获取需要请求的学校名
-        String schoolName = schoolMapper.selectBySchoolId(schoolAIRequestDTO.getSchoolId()).getSchoolName();
+        // 1.获取需要请求的学校名（学校不存在时业务报错，避免空指针）
+        var school = schoolMapper.selectBySchoolId(schoolAIRequestDTO.getSchoolId());
+        if (school == null) {
+            throw new OperateNotAllowException("该学校不存在");
+        }
+        String schoolName = school.getSchoolName();
         // 2.封装提示词
         String prompt = "请为我介绍" + schoolName + "的详细信息";
         // 3.发起请求并获取回答
@@ -89,8 +96,12 @@ public class AgentServiceImpl implements AgentService {
      */
     @Override
     public AgentMessageVO majorInformation(MajorAIRequestDTO majorAIRequestDTO) {
-        // 1.获取需要请求的专业名并封装问题
-        String majorName = majorMapper.selectById(majorAIRequestDTO.getMajorId()).getMajorName();
+        // 1.获取需要请求的专业名并封装问题（专业不存在时业务报错，避免空指针）
+        var major = majorMapper.selectById(majorAIRequestDTO.getMajorId());
+        if (major == null) {
+            throw new OperateNotAllowException("该专业不存在");
+        }
+        String majorName = major.getMajorName();
         // 2.封装提示词
         String prompt = "请为我介绍" + majorName + "这个专业的详细信息";
         // 3.发起请求并获取回答
@@ -106,6 +117,10 @@ public class AgentServiceImpl implements AgentService {
      */
     @Override
     public AgentMessageVO analyseVolunteerTable(AnalyseDTO analyseDTO) {
+        // 0.归属校验：防止分析（读取）他人志愿表（IDOR）
+        if (volunteerMapper.countOwnedTable(analyseDTO.getTableId(), ThreadLocalUtil.getCurrentId()) == 0) {
+            throw new VolunteerException("志愿表不存在");
+        }
         // 1.获取用户志愿表
         List<Volunteer> volunteerList = volunteerMapper.selectVolunteers(analyseDTO.getTableId());
         // 2.封装提示词
@@ -151,6 +166,18 @@ public class AgentServiceImpl implements AgentService {
     @Override
     public ChatRecord getChatRecordDetail(String conversationId) {
         return chatRecordMapper.findRecordByConversationId(conversationId);
+    }
+
+    /**
+     * 会话归属校验：按会话id + 用户id 联查
+     *
+     * @param conversationId 对话id
+     * @param userId         用户id
+     * @return ChatRecord，null 表示该会话不属于该用户
+     */
+    @Override
+    public ChatRecord findOwnedRecord(String conversationId, Long userId) {
+        return chatRecordMapper.findOwnedRecord(conversationId, userId);
     }
 
 
@@ -226,7 +253,7 @@ public class AgentServiceImpl implements AgentService {
 //     * @return Key
 //     */
 //    private String buildUserMessageKey() {
-//        return DouBaoRedisKey.DOUBAO_HISTORY_KEY + ThreadLocalUtil.getCurrentId();
+//        return DeepSeekRedisKey.DEEPSEEK_HISTORY_KEY + ThreadLocalUtil.getCurrentId();
 //    }
 //
 //    /**

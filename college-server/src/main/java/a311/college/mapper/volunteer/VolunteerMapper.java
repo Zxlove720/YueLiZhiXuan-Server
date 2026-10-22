@@ -54,6 +54,16 @@ public interface VolunteerMapper {
     Integer checkVolunteerTable(String tableName, long userId);
 
     /**
+     * 校验志愿表归属：防止越权读写/删除他人志愿表
+     *
+     * @param tableId 志愿表id
+     * @param userId  当前登录用户id
+     * @return 命中数，0 表示表不存在或不属于该用户
+     */
+    @Select("select count(table_id) from tb_volunteer_table where table_id = #{tableId} and user_id = #{userId}")
+    int countOwnedTable(int tableId, long userId);
+
+    /**
      * 根据id查询专业
      *
      * @param majorId 专业id
@@ -88,27 +98,29 @@ public interface VolunteerMapper {
     void createVolunteerTable(VolunteerTable volunteerTable);
 
     /**
-     * 删除志愿表
+     * 删除志愿表（限定归属，防止越权删除他人志愿表）
      *
      * @param tableId 志愿表id
+     * @param userId  当前登录用户id
      */
-    @Delete("delete from tb_volunteer_table where table_id = #{tableId}")
-    void deleteVolunteerTable(Integer tableId);
+    @Delete("delete from tb_volunteer_table where table_id = #{tableId} and user_id = #{userId}")
+    void deleteVolunteerTable(Integer tableId, long userId);
 
     /**
-     * 清空志愿表
+     * 清空志愿表（限定归属）
      *
      * @param tableId 志愿表id
+     * @param userId  当前登录用户id
      */
-    @Delete("delete from tb_volunteer where table_id = #{tableId}")
-    void clearVolunteerTable(Integer tableId);
+    @Delete("delete from tb_volunteer where table_id = #{tableId} and user_id = #{userId}")
+    void clearVolunteerTable(Integer tableId, long userId);
 
     /**
-     * 更新志愿表名字
+     * 更新志愿表名字（限定归属，防止越权改他人表名）
      *
      * @param volunteerTable 志愿表
      */
-    @Update("update tb_volunteer_table set table_name = #{tableName} where table_id = #{tableId}")
+    @Update("update tb_volunteer_table set table_name = #{tableName} where table_id = #{tableId} and user_id = #{userId}")
     void updateVolunteerTableName(VolunteerTable volunteerTable);
 
     /**
@@ -143,21 +155,22 @@ public interface VolunteerMapper {
     void addVolunteer(Volunteer volunteer);
 
     /**
-     * 删除志愿
+     * 删除志愿（限定归属：volunteer 行携带 user_id，防越权删他人志愿）
      *
      * @param volunteer 志愿实体
      */
-    @Delete("delete from tb_volunteer where volunteer_id = #{volunteerId}")
+    @Delete("delete from tb_volunteer where volunteer_id = #{volunteerId} and user_id = #{userId}")
     void deleteVolunteer(Volunteer volunteer);
 
     /**
-     * 删除展示志愿
+     * 删除展示志愿（限定归属）
      *
      * @param majorId 专业id
      * @param tableId 志愿表id
+     * @param userId  当前登录用户id
      */
-    @Delete("delete from tb_volunteer where major_id = #{majorId} and table_id = #{tableId}")
-    void deleteShowVolunteer(Integer majorId, int tableId);
+    @Delete("delete from tb_volunteer where major_id = #{majorId} and table_id = #{tableId} and user_id = #{userId}")
+    void deleteShowVolunteer(Integer majorId, int tableId, long userId);
 
     /**
      * 查询志愿表内容

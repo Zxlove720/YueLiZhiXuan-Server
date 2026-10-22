@@ -1,6 +1,7 @@
 package a311.college.agent;
 
 import a311.college.entity.agent.ChatRecord;
+import a311.college.exception.OperateNotAllowException;
 import a311.college.service.AgentService;
 import a311.college.thread.ThreadLocalUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -77,6 +78,13 @@ public class AgentUtil {
     public Flux<String> chatWithAgent(String prompt, @NotNull String conversationId) {
         // 在 HTTP 请求线程上捕获 userId，后续工具调用会切换到 boundedElastic 线程，ThreadLocal 不会传递
         Long userId = ThreadLocalUtil.getCurrentId();
+        // 会话归属校验：会话已存在但不属于当前用户时拒绝续聊，
+        // 防止凭 conversationId 读写/污染他人会话（IDOR）
+        if (agentService.findOwnedRecord(conversationId, userId) == null
+                && agentService.getChatRecordDetail(conversationId) != null) {
+            log.warn("用户{}尝试越权访问他人会话{}", userId, conversationId);
+            throw new OperateNotAllowException("会话不存在或无权访问");
+        }
         // 判断是否需要创建对话记录ChatRecord
         ChatRecord chatRecordDetail = agentService.getChatRecordDetail(conversationId);
         if (chatRecordDetail == null) {
@@ -153,6 +161,12 @@ public class AgentUtil {
      * @return List<AgentMessageVO>
      */
     public List<AgentMessageVO> getChatHistory(@PathVariable String chatId) {
+        // 归属校验：会话不存在或不属于当前用户时返回空列表，不泄露他人对话历史
+        Long userId = ThreadLocalUtil.getCurrentId();
+        if (agentService.findOwnedRecord(chatId, userId) == null) {
+            log.warn("用户{}尝试读取无权访问的会话历史{}", userId, chatId);
+            return List.of();
+        }
         return chatMemoryRepository.findByConversationId(chatId).stream().map(AgentMessageVO::new).toList();
     }
 

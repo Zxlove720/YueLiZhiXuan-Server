@@ -44,6 +44,30 @@ public interface UserMapper {
     void deleteById(Long id);
 
     /**
+     * 注销账号时清理该用户的全部业务数据，避免遗留孤儿行。
+     * 覆盖：院校收藏、专业收藏、评论、志愿、志愿表、AI 会话记录。
+     *
+     * @param id 用户id
+     */
+    @Delete("delete from tb_fav_school where user_id = #{id}")
+    void deleteFavSchoolsByUser(Long id);
+
+    @Delete("delete from tb_fav_major where user_id = #{id}")
+    void deleteFavMajorsByUser(Long id);
+
+    @Delete("delete from tb_comment where user_id = #{id}")
+    void deleteCommentsByUser(Long id);
+
+    @Delete("delete from tb_volunteer where user_id = #{id}")
+    void deleteVolunteersByUser(Long id);
+
+    @Delete("delete from tb_volunteer_table where user_id = #{id}")
+    void deleteVolunteerTablesByUser(Long id);
+
+    @Delete("delete from tb_agent_chat_record where user_id = #{id}")
+    void deleteAgentRecordsByUser(Long id);
+
+    /**
      * 用户注册
      *
      * @param user User实体对象
@@ -109,12 +133,13 @@ public interface UserMapper {
     List<CommentVO> selectMajorComment(Long id);
 
     /**
-     * 删除用户id
+     * 删除当前登录用户自己的评论（限定 user_id，防止越权删除他人评论）
      *
      * @param commentId 评论id
+     * @param userId 当前登录用户id
      */
-    @Delete("delete from tb_comment where comment_id = #{commentId}")
-    void deleteComment(Integer commentId);
+    @Delete("delete from tb_comment where comment_id = #{commentId} and user_id = #{userId}")
+    void deleteComment(Integer commentId, Long userId);
 
     /**
      * 根据用户名查询用户

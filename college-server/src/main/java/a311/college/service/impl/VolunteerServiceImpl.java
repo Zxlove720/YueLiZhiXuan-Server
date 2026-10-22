@@ -19,6 +19,7 @@ import a311.college.vo.volunteer.VolunteerVO;
 import cn.hutool.core.bean.BeanUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -36,6 +37,19 @@ public class VolunteerServiceImpl implements VolunteerService {
     public VolunteerServiceImpl(VolunteerMapper volunteerMapper, AgentService douBaoService) {
         this.volunteerMapper = volunteerMapper;
         this.douBaoService = douBaoService;
+    }
+
+    /**
+     * 校验志愿表归属：表不存在或不属于当前登录用户一律视为不存在，
+     * 防止凭 tableId 越权读写/删除他人志愿表（IDOR）。
+     *
+     * @param tableId 志愿表id
+     */
+    private void checkTableOwner(int tableId) {
+        long userId = ThreadLocalUtil.getCurrentId();
+        if (volunteerMapper.countOwnedTable(tableId, userId) == 0) {
+            throw new VolunteerException("志愿表不存在");
+        }
     }
 
     /**
@@ -65,6 +79,8 @@ public class VolunteerServiceImpl implements VolunteerService {
         Integer schoolType = volunteerPageDTO.getSchoolType();
         Set<Integer> addedMajorIds = null;
         if (volunteerPageDTO.getTableId() != null) {
+            // 传入 tableId 时校验归属，防止借 isAdd 标记探测他人志愿表内容
+            checkTableOwner(volunteerPageDTO.getTableId());
             addedMajorIds = new HashSet<>(volunteerMapper.selectAddedMajorIds(volunteerPageDTO.getTableId()));
         }
         // 第四步：处理当前页数据（只处理一页的学校，非常快）
@@ -135,10 +151,12 @@ public class VolunteerServiceImpl implements VolunteerService {
      * @param tableId 志愿表id
      */
     @Override
+    @Transactional
     public void deleteVolunteerTable(int tableId) {
-        volunteerMapper.deleteVolunteerTable(tableId);
-        // 删除志愿表的时候，表中的所有志愿都要一起删除
-        volunteerMapper.clearVolunteerTable(tableId);
+        checkTableOwner(tableId);
+        // 先删表内志愿再删表：任一步失败整体回滚，避免留下孤儿志愿行
+        volunteerMapper.clearVolunteerTable(tableId, ThreadLocalUtil.getCurrentId());
+        volunteerMapper.deleteVolunteerTable(tableId, ThreadLocalUtil.getCurrentId());
     }
 
     /**
@@ -148,7 +166,8 @@ public class VolunteerServiceImpl implements VolunteerService {
      */
     @Override
     public void clearVolunteerTable(Integer tableId) {
-        volunteerMapper.clearVolunteerTable(tableId);
+        checkTableOwner(tableId);
+        volunteerMapper.clearVolunteerTable(tableId, ThreadLocalUtil.getCurrentId());
     }
 
 
@@ -159,6 +178,8 @@ public class VolunteerServiceImpl implements VolunteerService {
      */
     @Override
     public void updateVolunteerTableName(VolunteerTable volunteerTable) {
+        checkTableOwner(volunteerTable.getTableId());
+        volunteerTable.setUserId(ThreadLocalUtil.getCurrentId());
         volunteerMapper.updateVolunteerTableName(volunteerTable);
     }
 
@@ -205,6 +226,8 @@ public class VolunteerServiceImpl implements VolunteerService {
      */
     @Override
     public void addVolunteer(AddVolunteerDTO addVolunteerDTO) {
+        // 0.校验志愿表归属，防止向他人志愿表插入数据（IDOR）
+        checkTableOwner(addVolunteerDTO.getTableId());
         // 1.判断当前志愿表是否已被填满
         Integer count = volunteerMapper.getSum(addVolunteerDTO.getTableId());
         if (count == null) {
@@ -225,6 +248,10 @@ public class VolunteerServiceImpl implements VolunteerService {
         }
         // 3.封装Volunteer实体类
         Volunteer volunteer = volunteerMapper.selectSchoolMajorById(majorId);
+        if (volunteer == null) {
+            // 专业不存在时直接业务报错，避免 copyProperties 空指针
+            throw new VolunteerException("该专业不存在");
+        }
         BeanUtil.copyProperties(addVolunteerDTO, volunteer);
         volunteer.setUserId(userId);
         volunteer.setCount(count + 1);
@@ -241,7 +268,14 @@ public class VolunteerServiceImpl implements VolunteerService {
     public void deleteVolunteer(Volunteer volunteer) {
         Integer count = volunteerMapper.getVolunteerCount(volunteer.getVolunteerId());
         Integer tableId = volunteerMapper.getTableId(volunteer.getVolunteerId());
+        if (count == null || tableId == null) {
+            // 志愿不存在，避免拆箱空指针
+            throw new VolunteerException("该志愿不存在");
+        }
+        // 归属校验：志愿所在表必须属于当前登录用户
+        checkTableOwner(tableId);
         volunteerMapper.updateCount(tableId, count);
+        volunteer.setUserId(ThreadLocalUtil.getCurrentId());
         volunteerMapper.deleteVolunteer(volunteer);
     }
 
@@ -252,9 +286,10 @@ public class VolunteerServiceImpl implements VolunteerService {
      */
     @Override
     public void deleteShowVolunteer(Volunteer volunteer) {
+        checkTableOwner(volunteer.getTableId());
         Integer count = volunteerMapper.getCount(volunteer.getMajorId(), volunteer.getTableId());
         volunteerMapper.updateCount(volunteer.getTableId(), count);
-        volunteerMapper.deleteShowVolunteer(volunteer.getMajorId(), volunteer.getTableId());
+        volunteerMapper.deleteShowVolunteer(volunteer.getMajorId(), volunteer.getTableId(), ThreadLocalUtil.getCurrentId());
     }
 
     /**
@@ -265,6 +300,8 @@ public class VolunteerServiceImpl implements VolunteerService {
      */
     @Override
     public List<Volunteer> selectVolunteer(int tableId) {
+        // 归属校验：防止越权读取他人志愿表内容（IDOR）
+        checkTableOwner(tableId);
         return volunteerMapper.selectVolunteers(tableId);
     }
 

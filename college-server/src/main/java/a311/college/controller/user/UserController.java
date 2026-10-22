@@ -4,6 +4,7 @@ import a311.college.constant.API.APIConstant;
 import a311.college.dto.query.PageQueryDTO;
 import a311.college.dto.user.*;
 import a311.college.dto.login.UserLoginDTO;
+import a311.college.dto.login.RefreshTokenDTO;
 import a311.college.entity.major.Major;
 import a311.college.entity.school.School;
 import a311.college.entity.user.User;
@@ -109,9 +110,26 @@ public class UserController {
      */
     @PostMapping("/edit")
     @Operation(summary = "用户修改密码")
-    public LoginResult editPassword(@RequestBody UserEditPasswordDTO userEditPasswordDTO) {
+    public Result<LoginResult> editPassword(@RequestBody UserEditPasswordDTO userEditPasswordDTO) {
         log.info("用户'{}'正在修改密码", ThreadLocalUtil.getCurrentId());
-        return userService.editPassword(userEditPasswordDTO);
+        return Result.success(userService.editPassword(userEditPasswordDTO));
+    }
+
+    /**
+     * 刷新令牌
+     * <p>
+     * 访问令牌（JWT）过期后，客户端携带刷新令牌请求新的双令牌。
+     * 每次刷新会轮换刷新令牌，旧刷新令牌随即失效。
+     * </p>
+     *
+     * @param refreshTokenDTO 刷新令牌DTO
+     * @return Result<LoginResult>
+     */
+    @PostMapping("/refresh")
+    @Operation(summary = "刷新令牌")
+    public Result<LoginResult> refresh(@RequestBody RefreshTokenDTO refreshTokenDTO) {
+        log.info("用户正在刷新令牌");
+        return Result.success(userService.refresh(refreshTokenDTO));
     }
 
     /**

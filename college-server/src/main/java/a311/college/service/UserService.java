@@ -3,6 +3,7 @@ package a311.college.service;
 import a311.college.dto.query.PageQueryDTO;
 import a311.college.dto.user.*;
 import a311.college.dto.login.UserLoginDTO;
+import a311.college.dto.login.RefreshTokenDTO;
 import a311.college.entity.major.Major;
 import a311.college.entity.school.School;
 import a311.college.entity.user.User;
@@ -26,6 +27,8 @@ public interface UserService {
     String sendEditCode(UserCodeDTO userCodeDTO);
 
     LoginResult editPassword(UserEditPasswordDTO userEditPasswordDTO);
+
+    LoginResult refresh(RefreshTokenDTO refreshTokenDTO);
 
     void layout();
 

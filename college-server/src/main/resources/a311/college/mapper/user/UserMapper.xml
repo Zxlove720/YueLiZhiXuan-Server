@@ -20,6 +20,9 @@
             <if test="subjects != null">
                 subjects = #{subjects},
             </if>
+            <if test="firstChoice != null">
+                firstChoice = #{firstChoice},
+            </if>
             <if test="grade != null">
                 grade = #{grade},
             </if>

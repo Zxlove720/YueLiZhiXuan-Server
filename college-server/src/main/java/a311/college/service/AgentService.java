@@ -26,4 +26,13 @@ public interface AgentService {
 
     ChatRecord getChatRecordDetail(String conversationId);
 
+    /**
+     * 会话归属校验：按会话id + 用户id 联查
+     *
+     * @param conversationId 会话id
+     * @param userId         用户id
+     * @return 会话记录，null 表示该会话不属于该用户
+     */
+    ChatRecord findOwnedRecord(String conversationId, Long userId);
+
 }

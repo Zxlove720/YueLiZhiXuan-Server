@@ -10,7 +10,11 @@ import java.io.Serializable;
 
 
 /**
- * 用户登录后返回的登录凭证
+ * 用户登录后返回的登录结果
+ * <p>
+ * 包含双令牌（访问令牌 + 刷新令牌）与用户基本信息。
+ * 出于安全考虑，不返回用户密码（无论明文还是密文）。
+ * </p>
  */
 @Data
 @NoArgsConstructor
@@ -18,8 +22,11 @@ import java.io.Serializable;
 @Schema(description = "登录信息返回")
 public class LoginResult implements Serializable {
 
-    @Schema(description = "登录凭证")
-    private String uuid;
+    @Schema(description = "访问令牌（JWT，有效期较短）")
+    private String accessToken;
+
+    @Schema(description = "刷新令牌（存储在Redis，有效期较长，用于换取新的访问令牌）")
+    private String refreshToken;
 
     @Schema(description = "用户头像")
     private String head;
@@ -29,9 +36,6 @@ public class LoginResult implements Serializable {
 
     @Schema(description = "用户手机")
     private String phone;
-
-    @Schema(description = "用户密码")
-    private String password;
 
     @Schema(description = "用户毕业年份")
     private Integer year;

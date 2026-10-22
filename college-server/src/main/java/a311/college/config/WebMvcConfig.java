@@ -16,7 +16,13 @@ public class WebMvcConfig implements WebMvcConfigurer {
     public CorsFilter corsFilter() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration corsConfiguration = new CorsConfiguration();
-        corsConfiguration.addAllowedOrigin("*");
+        // 白名单放行本机开发来源（可用环境变量 college.cors.allowed-origin-patterns 覆盖），
+        // 不再对任意来源全开
+        String patterns = System.getenv().getOrDefault("COLLEGE_CORS_ORIGINS",
+                "http://localhost:*,http://127.0.0.1:*");
+        for (String pattern : patterns.split(",")) {
+            corsConfiguration.addAllowedOriginPattern(pattern.trim());
+        }
         corsConfiguration.addAllowedHeader("*");
         corsConfiguration.addAllowedMethod("*");
         corsConfiguration.setMaxAge(MAX_AGE);
