@@ -32,11 +32,11 @@ public class VolunteerServiceImpl implements VolunteerService {
 
     private final VolunteerMapper volunteerMapper;
 
-    private final AgentService douBaoService;
+    private final AgentService deepSeekService;
 
-    public VolunteerServiceImpl(VolunteerMapper volunteerMapper, AgentService douBaoService) {
+    public VolunteerServiceImpl(VolunteerMapper volunteerMapper, AgentService deepSeekService) {
         this.volunteerMapper = volunteerMapper;
-        this.douBaoService = douBaoService;
+        this.deepSeekService = deepSeekService;
     }
 
     /**
@@ -313,7 +313,7 @@ public class VolunteerServiceImpl implements VolunteerService {
      */
     @Override
     public AgentMessageVO analyseVolunteerTable(AnalyseDTO analyseDTO) {
-        return douBaoService.analyseVolunteerTable(analyseDTO);
+        return deepSeekService.analyseVolunteerTable(analyseDTO);
     }
 
 }

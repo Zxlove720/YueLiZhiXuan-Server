@@ -16,7 +16,7 @@ public class ErrorConstant {
     public static final String REDIS_CONNECTION_ERROR = "Redis连接异常";
 
 
-    public static final String DOUBAO_SERVICE_ERROR = "当前服务不可用，请稍后重试";
+    public static final String DEEPSEEK_SERVICE_ERROR = "当前服务不可用，请稍后重试";
 
     public static final String RESPONSE_PRASE_ERROR = "服务响应解析失败";
 }

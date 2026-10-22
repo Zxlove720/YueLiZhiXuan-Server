@@ -2,7 +2,7 @@ package a311.college.service.impl;
 
 import a311.college.agent.AgentMessageVO;
 import a311.college.agent.AgentUtil;
-import a311.college.constant.deepseek.DouBaoConstant;
+import a311.college.constant.deepseek.DeepSeekConstant;
 import a311.college.dto.ai.MajorAIRequestDTO;
 import a311.college.dto.ai.SchoolAIRequestDTO;
 import a311.college.dto.volunteer.AnalyseDTO;
@@ -85,7 +85,7 @@ public class AgentServiceImpl implements AgentService {
         String prompt = "请为我介绍" + schoolName + "的详细信息";
         // 3.发起请求并获取回答
         String answer = agentUtil.chatForInformation(prompt);
-        return new AgentMessageVO(DouBaoConstant.ROLE_ASSISTANT, markDown2HTML(StringEscapeUtils.escapeHtml4(answer)));
+        return new AgentMessageVO(DeepSeekConstant.ROLE_ASSISTANT, markDown2HTML(StringEscapeUtils.escapeHtml4(answer)));
     }
 
     /**
@@ -106,7 +106,7 @@ public class AgentServiceImpl implements AgentService {
         String prompt = "请为我介绍" + majorName + "这个专业的详细信息";
         // 3.发起请求并获取回答
         String answer = agentUtil.chatForInformation(prompt);
-        return new AgentMessageVO(DouBaoConstant.ROLE_ASSISTANT, markDown2HTML(StringEscapeUtils.escapeHtml4(answer)));
+        return new AgentMessageVO(DeepSeekConstant.ROLE_ASSISTANT, markDown2HTML(StringEscapeUtils.escapeHtml4(answer)));
     }
 
     /**
@@ -129,8 +129,8 @@ public class AgentServiceImpl implements AgentService {
                 volunteerList.toString() + "\n请为我分析是否合理，并提出一些建议";
         // 3.发起请求并获取回答
         String answer = agentUtil.chatForInformation(prompt);
-        log.info(DouBaoConstant.ROLE_ASSISTANT + "{}", answer);
-        return new AgentMessageVO(DouBaoConstant.ROLE_ASSISTANT, markDown2HTML(StringEscapeUtils.escapeHtml4(answer)));
+        log.info(DeepSeekConstant.ROLE_ASSISTANT + "{}", answer);
+        return new AgentMessageVO(DeepSeekConstant.ROLE_ASSISTANT, markDown2HTML(StringEscapeUtils.escapeHtml4(answer)));
     }
 
     /**
@@ -198,10 +198,10 @@ public class AgentServiceImpl implements AgentService {
 //        }
 //        // 3.获取用户对话消息历史
 //        JSONArray messages = buildHistoryMessageArray();
-//        // 4.豆包API请求体构建
+//        // 4.DeepSeek API请求体构建
 //        JSONObject requestBody = new JSONObject();
 //        // 4.1选择模型
-//        requestBody.put("model", DouBaoConstant.MODEL_NAME);
+//        requestBody.put("model", DeepSeekConstant.MODEL_NAME);
 //        // 4.2封装消息
 //        requestBody.put("messages", messages);
 //        // 4.3设置模型温度
@@ -215,16 +215,16 @@ public class AgentServiceImpl implements AgentService {
 //                .writeTimeout(60, TimeUnit.SECONDS)
 //                .build();
 //        // 6.请求构建
-//        Request DouBaoRequest = new Request.Builder()
-//                .url(DouBaoConstant.API_URL)
-//                .addHeader("Authorization", "Bearer " + DouBaoConstant.API_KEY)
-//                .addHeader("Content-Type", DouBaoConstant.PARSE_SET)
+//        Request DeepSeekRequest = new Request.Builder()
+//                .url(DeepSeekConstant.API_URL)
+//                .addHeader("Authorization", "Bearer " + DeepSeekConstant.API_KEY)
+//                .addHeader("Content-Type", DeepSeekConstant.PARSE_SET)
 //                .post(RequestBody.create(
 //                        requestBody.toJSONString(),
-//                        MediaType.parse(DouBaoConstant.PARSE_SET)))
+//                        MediaType.parse(DeepSeekConstant.PARSE_SET)))
 //                .build();
 //        // 7.发起请求并接收响应
-//        try (Response response = client.newCall(DouBaoRequest).execute()) {
+//        try (Response response = client.newCall(DeepSeekRequest).execute()) {
 //            // 7.1响应失败，封装错误信息返回
 //            if (!response.isSuccessful()) {
 //                log.error("API请求失败，状态码：{}", response.code());
@@ -238,12 +238,12 @@ public class AgentServiceImpl implements AgentService {
 //            // 7.3解析响应体
 //            String answer = extractAnswer(responseJson);
 //            // 7.4将这一次回答添加到redis，作为对话历史
-//            addMessage(new UserAIMessageVO(DouBaoConstant.ROLE_ASSISTANT, answer));
+//            addMessage(new UserAIMessageVO(DeepSeekConstant.ROLE_ASSISTANT, answer));
 //            // 7.5封装UserAIMessageVO返回
-//            return new UserAIMessageVO(DouBaoConstant.ROLE_ASSISTANT, markDown2HTML(StringEscapeUtils.escapeHtml4(answer)));
+//            return new UserAIMessageVO(DeepSeekConstant.ROLE_ASSISTANT, markDown2HTML(StringEscapeUtils.escapeHtml4(answer)));
 //        } catch (IOException e) {
 //            log.error("API调用异常", e);
-//            throw new DouBaoAPIErrorException(ErrorConstant.DOUBAO_SERVICE_ERROR);
+//            throw new DeepSeekAPIErrorException(ErrorConstant.DEEPSEEK_SERVICE_ERROR);
 //        }
 //    }
 //
@@ -264,11 +264,11 @@ public class AgentServiceImpl implements AgentService {
 //        if (!redisTemplate.hasKey(key)) {
 //            // 1.如果没有对话历史将进行初始化
 //            JSONObject systemMessage = new JSONObject()
-//                    .fluentPut("role", DouBaoConstant.ROLE_SYSTEM)
-//                    .fluentPut("content", DouBaoConstant.INIT_CONSTANT);
+//                    .fluentPut("role", DeepSeekConstant.ROLE_SYSTEM)
+//                    .fluentPut("content", DeepSeekConstant.INIT_CONSTANT);
 //            // 2.将该用户初始化内容加入Redis
 //            redisTemplate.opsForList().rightPush(key, systemMessage.toJSONString());
-//            redisTemplate.expire(key, DouBaoRedisKey.DOUBAO_HISTORY_TTL, TimeUnit.HOURS);
+//            redisTemplate.expire(key, DeepSeekRedisKey.DEEPSEEK_HISTORY_TTL, TimeUnit.HOURS);
 //        }
 //    }
 //
@@ -325,7 +325,7 @@ public class AgentServiceImpl implements AgentService {
 //     * @return UserAIMessageVO 错误信息
 //     */
 //    private UserAIMessageVO errorResponse() {
-//        return new UserAIMessageVO(DouBaoConstant.ROLE_ASSISTANT, ErrorConstant.DOUBAO_SERVICE_ERROR);
+//        return new UserAIMessageVO(DeepSeekConstant.ROLE_ASSISTANT, ErrorConstant.DEEPSEEK_SERVICE_ERROR);
 //    }
 
 //    /**
@@ -343,8 +343,8 @@ public class AgentServiceImpl implements AgentService {
 //        Request request = buildRequest(question);
 //        // 3.发起请求并获取回答
 //        String answer = executeRequest(request);
-//        log.info(DouBaoConstant.ROLE_ASSISTANT + "{}", answer);
-//        return new SchoolAIMessageVO(DouBaoConstant.ROLE_ASSISTANT, markDown2HTML(StringEscapeUtils.escapeHtml4(answer)));
+//        log.info(DeepSeekConstant.ROLE_ASSISTANT + "{}", answer);
+//        return new SchoolAIMessageVO(DeepSeekConstant.ROLE_ASSISTANT, markDown2HTML(StringEscapeUtils.escapeHtml4(answer)));
 //    }
 
 //    /**
@@ -362,8 +362,8 @@ public class AgentServiceImpl implements AgentService {
 //        Request request = buildRequest(question);
 //        // 3.发起请求并获取回答
 //        String answer = executeRequest(request);
-//        log.info(DouBaoConstant.ROLE_ASSISTANT + "{}", answer);
-//        return new MajorAIMessageVO(DouBaoConstant.ROLE_ASSISTANT, markDown2HTML(StringEscapeUtils.escapeHtml4(answer)));
+//        log.info(DeepSeekConstant.ROLE_ASSISTANT + "{}", answer);
+//        return new MajorAIMessageVO(DeepSeekConstant.ROLE_ASSISTANT, markDown2HTML(StringEscapeUtils.escapeHtml4(answer)));
 //    }
 
 //    /**
@@ -383,8 +383,8 @@ public class AgentServiceImpl implements AgentService {
 //        Request request = buildRequest(question);
 //        // 3.发起请求并获取回答
 //        String answer = executeRequest(request);
-//        log.info(DouBaoConstant.ROLE_ASSISTANT + "{}", answer);
-//        return new UserAIMessageVO(DouBaoConstant.ROLE_ASSISTANT, markDown2HTML(StringEscapeUtils.escapeHtml4(answer)));
+//        log.info(DeepSeekConstant.ROLE_ASSISTANT + "{}", answer);
+//        return new UserAIMessageVO(DeepSeekConstant.ROLE_ASSISTANT, markDown2HTML(StringEscapeUtils.escapeHtml4(answer)));
 //    }
 
 //    /**
@@ -397,23 +397,23 @@ public class AgentServiceImpl implements AgentService {
 //        // 1.将问题封装为JSON数组
 //        JSONArray message = new JSONArray();
 //        JSONObject initMessage = new JSONObject();
-//        initMessage.put("role", DouBaoConstant.ROLE_ASSISTANT);
+//        initMessage.put("role", DeepSeekConstant.ROLE_ASSISTANT);
 //        initMessage.put("content", question);
 //        message.add(initMessage);
 //        // 2.构建请求体
 //        JSONObject requestBody = new JSONObject();
-//        requestBody.put("model", DouBaoConstant.MODEL_NAME);
+//        requestBody.put("model", DeepSeekConstant.MODEL_NAME);
 //        requestBody.put("messages", message);
 //        requestBody.put("temperature", 0.3);
 //        requestBody.put("stream", false);
 //        // 3.构建新的请求，请求DeepSeekAPI
 //        return new Request.Builder()
-//                .url(DouBaoConstant.API_URL)
-//                .addHeader("Authorization", "Bearer " + DouBaoConstant.API_KEY)
-//                .addHeader("Content-Type", DouBaoConstant.PARSE_SET)
+//                .url(DeepSeekConstant.API_URL)
+//                .addHeader("Authorization", "Bearer " + DeepSeekConstant.API_KEY)
+//                .addHeader("Content-Type", DeepSeekConstant.PARSE_SET)
 //                .post(RequestBody.create(
 //                        requestBody.toJSONString(),
-//                        MediaType.parse(DouBaoConstant.PARSE_SET)))
+//                        MediaType.parse(DeepSeekConstant.PARSE_SET)))
 //                .build();
 //    }
 //
@@ -434,8 +434,8 @@ public class AgentServiceImpl implements AgentService {
 //        try (Response response = client.newCall(request).execute()) {
 //            if (!response.isSuccessful()) {
 //                // 2.1响应失败，记录错误日志并返回
-//                log.info(DouBaoConstant.RESPONSE_ERROR_CONSTANT);
-//                throw new DouBaoAPIErrorException(DouBaoConstant.RESPONSE_ERROR_CONSTANT);
+//                log.info(DeepSeekConstant.RESPONSE_ERROR_CONSTANT);
+//                throw new DeepSeekAPIErrorException(DeepSeekConstant.RESPONSE_ERROR_CONSTANT);
 //            }
 //            // 2.2获取响应体
 //            JSONObject responseJson = null;
@@ -446,8 +446,8 @@ public class AgentServiceImpl implements AgentService {
 //            return extractAnswer(responseJson);
 //        } catch (IOException e) {
 //            // 2.4请求失败则报错
-//            log.info(DouBaoConstant.REQUEST_ERROR_CONSTANT);
-//            throw new DouBaoAPIErrorException(DouBaoConstant.REQUEST_ERROR_CONSTANT);
+//            log.info(DeepSeekConstant.REQUEST_ERROR_CONSTANT);
+//            throw new DeepSeekAPIErrorException(DeepSeekConstant.REQUEST_ERROR_CONSTANT);
 //        }
 //    }
 

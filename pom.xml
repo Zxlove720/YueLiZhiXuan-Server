@@ -39,7 +39,6 @@
         <hutool.version>5.8.22</hutool.version>
         <okhttp.version>4.12.0</okhttp.version>
         <apache.commons.math3.version>3.6.1</apache.commons.math3.version>
-        <volcengine.version>0.2.6</volcengine.version>
         <commons.text.version>1.10.0</commons.text.version>
         <commonmark.version>0.22.0</commonmark.version>
         <spring-ai.version>1.0.5</spring-ai.version>
@@ -163,12 +162,6 @@
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-math3</artifactId>
                 <version>${apache.commons.math3.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.volcengine</groupId>
-                <artifactId>volcengine-java-sdk-ark-runtime</artifactId>
-                <version>${volcengine.version}</version>
             </dependency>
 
             <dependency>

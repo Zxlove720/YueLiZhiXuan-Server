@@ -37,12 +37,12 @@ public class MajorController {
 
     private final MajorService majorService;
 
-    private final AgentService douBaoService;
+    private final AgentService deepSeekService;
 
     @Autowired
-    public MajorController(MajorService majorService, AgentService douBaoService) {
+    public MajorController(MajorService majorService, AgentService deepSeekService) {
         this.majorService = majorService;
-        this.douBaoService = douBaoService;
+        this.deepSeekService = deepSeekService;
     }
 
     /**
@@ -95,7 +95,7 @@ public class MajorController {
     @Operation(summary = "请求AI获取专业信息")
     public Result<AgentMessageVO> majorAIRequest(@RequestBody MajorAIRequestDTO majorAIRequestDTO) {
         log.info("正在请求'{}'专业的信息", majorAIRequestDTO.getMajorId());
-        AgentMessageVO agentMessageVO = douBaoService.majorInformation(majorAIRequestDTO);
+        AgentMessageVO agentMessageVO = deepSeekService.majorInformation(majorAIRequestDTO);
         return Result.success(agentMessageVO);
     }
 

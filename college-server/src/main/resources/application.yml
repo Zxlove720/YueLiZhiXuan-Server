@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8081
 
 spring:
   application:
@@ -19,9 +19,9 @@ spring:
       - org.springframework.ai.model.openai.autoconfigure.OpenAiAudioSpeechAutoConfiguration
       - org.springframework.ai.model.openai.autoconfigure.OpenAiAudioTranscriptionAutoConfiguration
       - org.springframework.ai.model.openai.autoconfigure.OpenAiModerationAutoConfiguration
-      # 同理，即使项目中不再使用DeepSeek模型，但是由于pom.xml中引入了spring-ai-deepseek依赖，所以说spring的autoconfigure机制会自动装配deepSeekChatModel的Bean，但是无法从
-      # spring.ai.deepseek中读取到ApiKey等信息，所以说启动也会报错，所以说也需要在autoconfigure中排除不需要自动装配的DeepSeek相关的Bean
-      # 或者更好的方式是：当确认了项目中不会再使用DeepSeek模型之后，就应该把相关依赖移除pom.xml文件
+      # 同理，由于pom.xml中引入了spring-ai-deepseek依赖，spring的autoconfigure机制会自动装配deepSeekChatModel的Bean，但是无法从
+      # spring.ai.deepseek中读取到ApiKey等信息，所以说启动也会报错，所以说也需要在autoconfigure中排除不需要自动装配的DeepSeek相关的Bean。
+      # 注意：本项目中的 DeepSeek 是通过 OpenAI 兼容协议手动配置的（college.ai.deepseek.*），并不使用该自动配置
       - org.springframework.ai.model.deepseek.autoconfigure.DeepSeekChatAutoConfiguration
 
   # 设置mysql
@@ -51,31 +51,15 @@ spring:
 
   # 配置SpringAI
   ai:
-    # 由于项目需要配置两个兼容openai的模型，无法在SpringAI中自动配置，于是进行手动配置
-    #    # 豆包API
-    #    openai:
-    #      base-url: https://ark.cn-beijing.volces.com/api/v3
-    #      api-key: ${DOUBAO_API_KEY}
-    #      chat:
-    #        completions-path: /chat/completions
-    #        options:
-    #          model: doubao-1-5-lite-32k-250115
-    #          temperature: 0.3
-    #    # 思考版本Deepseek
-    #    # 由于DeepSeek不同时支持工具调用和深度思考，现在已经废弃
-    #    deepseek:
-    #      base-url: https://api.deepseek.com
-    #      api-key: ${DEEPSEEK_API_KEY}
-    #      chat:
-    #        options:
-    #          model: deepseek-reasoner
-    #          temperature: 0.7
+    # DeepSeek 与 Qwen 两个模型都兼容 OpenAI 协议，均由 SpringAIConfiguration 手动读取 college.ai.* 配置后构建，
+    # 因此这里不再重复声明 spring.ai.openai.* / spring.ai.deepseek.* 的对话模型配置，
+    # 只保留向量模型（Qwen embedding）配置供 RAG 使用。
     openai:
       base-url: https://dashscope.aliyuncs.com/compatible-mode
       api-key: ${QWEN_API_KEY}
       embedding:
         options:
-          model: text-embedding-v4
+          model: qwen3.7-text-embedding-flash
           dimensions: 1024
     chat:
       memory:
@@ -107,11 +91,11 @@ college:
       bucket-name: ${college.aliyun.oss.bucket-name}
   # 由于需要配置两个OpenAI兼容的模型，无法直接使用SpringAI的OpenAi配置，所以说需要进行手动配置，然后在Config中手动加载
   ai:
-    doubao:
-      base-url: ${college.ai.doubao.base-url}
-      api-key: ${college.ai.doubao.api-key}
-      model: ${college.ai.doubao.model}
-      temperature: ${college.ai.doubao.temperature}
+    deepseek:
+      base-url: ${college.ai.deepseek.base-url}
+      api-key: ${college.ai.deepseek.api-key}
+      model: ${college.ai.deepseek.model}
+      temperature: ${college.ai.deepseek.temperature}
     qwen:
       base-url: ${college.ai.qwen.base-url}
       api-key: ${college.ai.qwen.api-key}

@@ -25,14 +25,14 @@
 //
 //    private final ChatClient chatClient;
 //
-//    private final AgentService douBaoService;
+//    private final AgentService deepSeekService;
 //
 //    private final ChatMemoryRepository chatMemoryRepository;
 //
 //
-//    public SpringAITestController(ChatClient chatClient, AgentService douBaoService, ChatMemoryRepository chatMemoryRepository) {
+//    public SpringAITestController(ChatClient chatClient, AgentService deepSeekService, ChatMemoryRepository chatMemoryRepository) {
 //        this.chatClient = chatClient;
-//        this.douBaoService = douBaoService;
+//        this.deepSeekService = deepSeekService;
 //        this.chatMemoryRepository = chatMemoryRepository;
 //    }
 //
@@ -79,7 +79,7 @@
 //        // 常规模型返回的是AssistantMessage类型，但是DeepSeek返回的是DeepSeekAssistantMessage类型，而思考内容在reasoning_content中，需要特殊处理
 //        Long userId = ThreadLocalUtil.getCurrentId();
 //        String conversationId = chatId + "-" + userId;
-//        ChatRecord chatRecordDetail = douBaoService.getChatRecordDetail(conversationId);
+//        ChatRecord chatRecordDetail = deepSeekService.getChatRecordDetail(conversationId);
 //        if (chatRecordDetail == null) {
 //            log.info("conversationId：{}在数据库中不存在，需要创建会话记录", conversationId);
 //            // 构造会话记录
@@ -89,7 +89,7 @@
 //            chatRecord.setTitle(userId + "对话");
 //            chatRecord.setCreateTime(LocalDateTime.now());
 //            // 保存会话记录
-//            douBaoService.saveRecord(chatRecord);
+//            deepSeekService.saveRecord(chatRecord);
 //        }
 //        return chatClient
 //                .prompt(prompt)
@@ -126,7 +126,7 @@
 //     */
 //    @GetMapping("/record")
 //    public Result<List<ChatRecord>> getChatRecord() {
-//        return Result.success(douBaoService.getUserChatRecordList(ThreadLocalUtil.getCurrentId()));
+//        return Result.success(deepSeekService.getUserChatRecordList(ThreadLocalUtil.getCurrentId()));
 //    }
 //
 //    /**

@@ -36,12 +36,12 @@ public class SchoolController {
 
     private final SchoolService schoolService;
 
-    private final AgentService douBaoService;
+    private final AgentService deepSeekService;
 
     @Autowired
-    public SchoolController(SchoolService schoolService, AgentService douBaoService) {
+    public SchoolController(SchoolService schoolService, AgentService deepSeekService) {
         this.schoolService = schoolService;
-        this.douBaoService = douBaoService;
+        this.deepSeekService = deepSeekService;
     }
 
     /**
@@ -327,7 +327,7 @@ public class SchoolController {
     @Operation(summary = "请求AI获取学校信息")
     public Result<AgentMessageVO> schoolAIRequest(@RequestBody SchoolAIRequestDTO schoolAIRequestDTO) {
         log.info("正在请求'{}'学校的信息", schoolAIRequestDTO.getSchoolId());
-        AgentMessageVO AgentMessageVO = douBaoService.schoolInformation(schoolAIRequestDTO);
+        AgentMessageVO AgentMessageVO = deepSeekService.schoolInformation(schoolAIRequestDTO);
         return Result.success(AgentMessageVO);
     }
 

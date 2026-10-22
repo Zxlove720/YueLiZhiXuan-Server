@@ -46,21 +46,21 @@ public class SpringAIConfiguration {
      * 以下是两个兼容OpenAI规范的模型的配置信息
      * 因为项目中需要使用两个兼容OpenAI的模型，Spring无法自动配置，所以说只能手动读取配置信息，手动完成配置
      */
-    // 豆包模型的BaseURL
-    @Value("${college.ai.doubao.base-url}")
-    private String doubaoBaseUrl;
+    // DeepSeek模型的BaseURL
+    @Value("${college.ai.deepseek.base-url}")
+    private String deepseekBaseUrl;
 
-    // 豆包模型的ApiKey
-    @Value("${college.ai.doubao.api-key}")
-    private String doubaoApiKey;
+    // DeepSeek模型的ApiKey
+    @Value("${college.ai.deepseek.api-key}")
+    private String deepseekApiKey;
 
-    // 豆包模型的具体型号
-    @Value("${college.ai.doubao.model}")
-    private String doubaoModel;
+    // DeepSeek模型的具体型号
+    @Value("${college.ai.deepseek.model}")
+    private String deepseekModel;
 
-    // 豆包模型的temperature
-    @Value("${college.ai.doubao.temperature:0.3}")
-    private Double doubaoTemperature;
+    // DeepSeek模型的temperature
+    @Value("${college.ai.deepseek.temperature:0.3}")
+    private Double deepseekTemperature;
 
     // Qwen模型的BaseUrl
     @Value("${college.ai.qwen.base-url}")
@@ -78,18 +78,18 @@ public class SpringAIConfiguration {
     @Value("${college.ai.qwen.temperature:0.7}")
     private Double qwenTemperature;
 
-    // doubao-1-5-lite-32k-250115
-    @Bean("doubaoChatModel")
-    public OpenAiChatModel doubaoChatModel() {
+    // deepseek-flash
+    @Bean("deepseekChatModel")
+    public OpenAiChatModel deepseekChatModel() {
         OpenAiApi api = OpenAiApi.builder()
-                .baseUrl(doubaoBaseUrl)
-                .apiKey(doubaoApiKey)
+                .baseUrl(deepseekBaseUrl)
+                .apiKey(deepseekApiKey)
                 .completionsPath("/chat/completions")
                 .build();
 
         OpenAiChatOptions options = OpenAiChatOptions.builder()
-                .model(doubaoModel)
-                .temperature(doubaoTemperature)
+                .model(deepseekModel)
+                .temperature(deepseekTemperature)
                 .build();
 
         return OpenAiChatModel.builder()
@@ -184,14 +184,14 @@ public class SpringAIConfiguration {
     /**
      * 创建ChatClient
      * <p>
-     * 用于在页面中请求大模型获取信息的chatClient，使用doubao大模型，没有对话记忆，没有深度思考，只能单次对话
+     * 用于在页面中请求大模型获取信息的chatClient，使用DeepSeek大模型，没有对话记忆，没有深度思考，只能单次对话
      * </p>
      *
      * @param chatModel ChatModel实体
      * @return ChatClient
      */
     @Bean
-    public ChatClient simpleChatClient(@Qualifier("doubaoChatModel") OpenAiChatModel chatModel) {
+    public ChatClient simpleChatClient(@Qualifier("deepseekChatModel") OpenAiChatModel chatModel) {
         return ChatClient
                 .builder(chatModel)
                 .defaultSystem(informationPrompt)
@@ -243,7 +243,7 @@ public class SpringAIConfiguration {
 //                // 创建ChatClient工厂
 //                .builder(chatModel)
 //                // 设置System背景信息，现在只需要在创建ChatClient的时候指定System背景信息即可，不需要每次发送请求的时候都封装到Message中
-//                .defaultSystem("你的名字叫豆包")
+//                .defaultSystem("你的名字叫小鲤")
 //                // 通过Spring AOP给大模型调用添加环绕通知，进行日志记录
 //                // 添加日志记录Advisor
 //                // 添加会话记忆Advisor

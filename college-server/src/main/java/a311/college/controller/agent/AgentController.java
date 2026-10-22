@@ -8,7 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 
-import javax.validation.constraints.NotNull;
 import java.util.List;
 
 @Slf4j
@@ -31,17 +30,17 @@ public class AgentController {
 //    @PostMapping("/answer")
 //    @Operation(summary = "DeepSeekApi回答问题")
 //    public Result<UserAIMessageVO> responseQuestion(@RequestBody UserAIRequestDTO request) {
-//        return Result.success(douBaoService.response(request));
+//        return Result.success(deepSeekService.response(request));
 //    }
 
     /**
-     * SpringAI实现对话功能
+     * SpringAI实现对话功能（流式，GET，与前端 fetch 流式请求对齐）
      *
      * @param prompt 用户提示词
-     * @return Result<Flux<String>> 大模型生成结果
+     * @return Flux<String> 大模型分块纯文本流
      */
-    @RequestMapping("/chat")
-    public Flux<String> chat(@RequestParam(defaultValue = "你好") String prompt, @RequestParam @NotNull String conversationId) {
+    @GetMapping("/chat")
+    public Flux<String> chat(@RequestParam(defaultValue = "你好") String prompt, @RequestParam String conversationId) {
         return agentUtil.chatWithAgent(prompt, conversationId);
     }
 
