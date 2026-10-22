@@ -29,3 +29,7 @@ test/
 
 application-dev.yml
 application.yml
+
+# Local run artifacts and secrets (agent scratch: logs, pid, env, seeded m2 repo)
+.dsh-run/
+.dsh-acl-reports/
