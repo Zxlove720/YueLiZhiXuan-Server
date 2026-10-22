@@ -38,6 +38,9 @@ public class School implements Serializable {
     @Schema(description = "客观得分")
     private Integer score;
 
+    @Schema(description = "软科2025中国大学排名（主榜），501表示500+，null表示未上榜")
+    private Integer ruankeRank;
+
     @Schema(description = "排名项目")
     private String rankItem;
 

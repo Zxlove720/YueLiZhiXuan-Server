@@ -12,7 +12,8 @@
         s.school_province,
         s.school_address,
         s.rank_list,
-        s.score
+        s.score,
+        s.ruanke_rank
         FROM tb_school AS s
         JOIN tb_province as p ON s.school_id = p.school_id
         JOIN tb_year as y ON p.province_id = y.province_id
@@ -51,9 +52,15 @@
         JOIN tb_batch b ON c.category_id = b.category_id
         JOIN tb_score sc ON b.batch_id = sc.batch_id
         WHERE s.school_id = #{schoolId}
-        <if test="firstChoice != null and firstChoice != ''">
-            AND (sc.first_choice = #{firstChoice} OR sc.first_choice = '不限')
-        </if>
+            <if test="firstChoice != null and firstChoice != ''">
+                AND (sc.first_choice = #{firstChoice} OR sc.first_choice = '不限' OR sc.first_choice IS NULL)
+                <if test='firstChoice == "物理"'>
+                    AND c.category_name IN ('物理类', '理科', '综合')
+                </if>
+                <if test='firstChoice == "历史"'>
+                    AND c.category_name IN ('历史类', '文科', '综合')
+                </if>
+            </if>
         GROUP BY sc.major_name
         ORDER BY min_ranking
     </select>
@@ -85,7 +92,8 @@
 
     <!-- 查询某学校所有专业 -->
     <select id="selectAllSchoolMajor" resultType="a311.college.entity.school.SchoolMajor">
-        select distinct sc.major_name,
+        select distinct sc.major_id,
+                        sc.major_name,
                         sc.first_choice,
                         sc.other_choice,
                         sc.special,
@@ -150,7 +158,7 @@
 
     <!-- 查询学校评价 -->
     <select id="selectComment" resultType="a311.college.vo.school.CommentVO">
-        select u.username, u.head, c.comment, c.add_time
+        select c.comment_id, u.username, u.head, c.comment, c.add_time
         from tb_comment AS c,
              tb_user AS u
         where c.school_id = #{schoolId}

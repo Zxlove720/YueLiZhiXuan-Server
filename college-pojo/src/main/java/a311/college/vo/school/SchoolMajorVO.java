@@ -17,6 +17,9 @@ public class SchoolMajorVO {
     @Schema(description = "专业名")
     private String majorName;
 
+    @Schema(description = "专业id")
+    private Integer majorId;
+
     @Schema(description = "首选科目")
     private String firstChoice;
 

@@ -19,6 +19,9 @@ public class SchoolMajor implements Serializable {
     @Schema(description = "专业名称")
     private String majorName;
 
+    @Schema(description = "专业id")
+    private Integer majorId;
+
     @Schema(description = "所属批次")
     private String batchName;
 

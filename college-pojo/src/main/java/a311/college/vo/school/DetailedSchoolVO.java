@@ -41,6 +41,9 @@ public class DetailedSchoolVO implements Serializable {
     @Schema(description = "学校综合得分")
     private Integer score;
 
+    @Schema(description = "软科2025中国大学排名（主榜），501=500+，null=未上榜")
+    private Integer ruankeRank;
+
     @Schema(description = "排名项目")
     private String rankItem;
 

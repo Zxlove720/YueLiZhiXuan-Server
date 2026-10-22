@@ -12,6 +12,7 @@ import a311.college.entity.school.School;
 import a311.college.entity.school.SchoolMajor;
 import a311.college.enumeration.school.*;
 import a311.college.exception.CommentIllegalException;
+import a311.college.exception.OperateNotAllowException;
 import a311.college.exception.PageQueryException;
 import a311.college.exception.ReAdditionException;
 import a311.college.filter.FinderUtil;
@@ -354,11 +355,14 @@ public class SchoolServiceImpl implements SchoolService {
      */
     @Override
     public DetailedSchoolVO getDetailSchool(SchoolDTO schoolDTO) {
-        // 1.获取学校信息
+        // 1.获取学校信息（不存在时业务报错，避免后续空指针）
         DetailedSchoolVO detailedSchoolVO = schoolMapper.selectDetailBySchoolId(schoolDTO.getSchoolId());
-        // 2.处理学校排名信息
-        String rankItem = detailedSchoolVO.getRankItem();
-        String rankInfo = detailedSchoolVO.getRankInfo();
+        if (detailedSchoolVO == null) {
+            throw new OperateNotAllowException("该学校不存在");
+        }
+        // 2.处理学校排名信息（排名字段缺失时按空串处理，避免空指针）
+        String rankItem = detailedSchoolVO.getRankItem() == null ? "" : detailedSchoolVO.getRankItem();
+        String rankInfo = detailedSchoolVO.getRankInfo() == null ? "" : detailedSchoolVO.getRankInfo();
         Map<String, String> rank = new HashMap<>();
         String[] splitRankItem = rankItem.split(",");
         String[] splitRankInfo = rankInfo.split(",");
@@ -369,14 +373,10 @@ public class SchoolServiceImpl implements SchoolService {
         // 3.返回随机校园风光
         // 3.1获取所有照片
         List<String> imageList = resourceMapper.getAllImages();
-        // 3.2从所有照片中随机选取6张
-        List<String> images = new ArrayList<>();
-        for (int i = 0; i < 6; i++) {
-            int index = RandomUtil.randomInt(0, 150);
-            images.add(imageList.get(index));
-        }
-        // 3.3返回随机6张校园风光
-        detailedSchoolVO.setImages(images);
+        // 3.2打乱后取前6张，保证同一次返回中不重复（图库不足6张时全量返回）
+        List<String> images = new ArrayList<>(imageList);
+        Collections.shuffle(images);
+        detailedSchoolVO.setImages(images.subList(0, Math.min(6, images.size())));
         int schoolId = schoolDTO.getSchoolId();
         switch (schoolId) {
             case 1038 -> detailedSchoolVO.setImages(SchoolConstant.get1038());
@@ -502,6 +502,10 @@ public class SchoolServiceImpl implements SchoolService {
     @Override
     public List<School> getCloseSchool(SchoolDTO schoolDTO) {
         School school = schoolMapper.selectBySchoolId(schoolDTO.getSchoolId());
+        // 学校不存在或没有分数数据时返回空列表，避免空指针
+        if (school == null || school.getScore() == null || school.getScore() <= 0) {
+            return new ArrayList<>();
+        }
         Integer score = school.getScore();
         List<School> schoolVOList = schoolMapper.selectCloseSchool(score);
         for (School closeSchool : schoolVOList) {
@@ -526,6 +530,17 @@ public class SchoolServiceImpl implements SchoolService {
         // 2.处理专业信息
         // 2.1获得专业信息
         List<SchoolMajor> schoolMajorList = schoolMapper.selectAllSchoolMajor(forecastDTO);
+        // 该校在该省份/选科下没有分数线数据（分数线年份与预测取数年份不一致时常见），返回空预测而不是越界
+        if (schoolMajorList.isEmpty()) {
+            SchoolForecastVO emptyForecast = new SchoolForecastVO();
+            emptyForecast.setSelectableMajor(0);
+            emptyForecast.setMinimum(0);
+            emptyForecast.setStable(0);
+            emptyForecast.setRush(0);
+            emptyForecast.setChance(0);
+            emptyForecast.setMajorForecastList(new ArrayList<>());
+            return emptyForecast;
+        }
         // 2.2将SchoolMajor对象封装为SchoolMajorVO对象返回
         List<SchoolMajorVO> schoolMajorVOList = new ArrayList<>();
         for (SchoolMajor schoolMajor : schoolMajorList) {
@@ -582,8 +597,10 @@ public class SchoolServiceImpl implements SchoolService {
         schoolForecastVO.setSelectableMajor(minimum + stable + rush);
         // 3.2封装专业列表
         schoolForecastVO.setMajorForecastList(schoolMajorVOList);
-        // 3.3计算录取概率
-        double chance = calculateProbability(forecastDTO.getGrade(), forecastDTO.getRanking(), schoolMajorList.get(0).getMinScore(),
+        // 3.3计算录取概率（grade/ranking 缺失时兜底 0，避免拆箱空指针）
+        int grade = forecastDTO.getGrade() != null ? forecastDTO.getGrade() : 0;
+        int ranking = forecastDTO.getRanking() != null ? forecastDTO.getRanking() : 0;
+        double chance = calculateProbability(grade, ranking, schoolMajorList.get(0).getMinScore(),
                 schoolMajorList.get(0).getMinRanking(), sigma);
         int forecast = (int) Math.round(((stable + minimum + 0.2 * rush) / schoolMajorList.size()) * 100);
         schoolForecastVO.setChance(forecast == 0 ? 1 : forecast);
@@ -670,7 +687,12 @@ public class SchoolServiceImpl implements SchoolService {
             throw new CommentIllegalException(ErrorConstant.SENSITIVE_WORD_ERROR);
         }
         addCommentDTO.setUserId(ThreadLocalUtil.getCurrentId());
-        addCommentDTO.setSchoolName(schoolMapper.selectBySchoolId(addCommentDTO.getSchoolId()).getSchoolName());
+        // 学校不存在时业务报错，避免空指针
+        School commentSchool = schoolMapper.selectBySchoolId(addCommentDTO.getSchoolId());
+        if (commentSchool == null) {
+            throw new OperateNotAllowException("该学校不存在");
+        }
+        addCommentDTO.setSchoolName(commentSchool.getSchoolName());
         schoolMapper.addComment(addCommentDTO);
     }
 
@@ -719,88 +741,55 @@ public class SchoolServiceImpl implements SchoolService {
     }
 
     /**
-     * 获取本省热门本科院校
+     * 获取本省热门本科院校（按分数取前12）
      *
      * @param provinceQueryDTO 省份查询DTO
      * @return List<SchoolSceneryVO>
      */
     @Override
     public List<SchoolSceneryVO> getSchool1(ProvinceQueryDTO provinceQueryDTO) {
-        // 1.先精确查询到本省最好的学校
-        SchoolSceneryVO bestSchool = schoolMapper.selectUniqueSchool(provinceQueryDTO.getProvince().getBestSchool());
-        List<SchoolMajor> majorList = schoolMapper.selectBestMajor(bestSchool.getSchoolId(), provinceQueryDTO.getProvince().getName());
-        // 1.1封装专业列表
-        bestSchool.setMajors(majorList);
-        // 2.再查询其他学校
-        List<SchoolSceneryVO> schoolSceneryVOList = schoolMapper.selectSchoolByProvince
-                (provinceQueryDTO.getProvince().getName(), bestSchool.getSchoolName());
-        schoolSceneryVOList.add(bestSchool);
-        // 3.处理数据
-        trimData(schoolSceneryVOList);
-        return schoolSceneryVOList;
+        List<SchoolSceneryVO> list = schoolMapper.selectHotInProvince(provinceQueryDTO.getProvince().getName(), "本科");
+        trimData(list);
+        return list;
     }
 
     /**
-     * 获取本省热门专科院校
+     * 获取本省热门专科院校（按分数取前12）
      *
      * @param provinceQueryDTO 省份查询DTO
      * @return List<SchoolSceneryVO>
      */
     @Override
     public List<SchoolSceneryVO> getSchool2(ProvinceQueryDTO provinceQueryDTO) {
-        // 1.先精确查询到本省最好的专科
-        SchoolSceneryVO bestProfessional = schoolMapper.selectUniqueSchool(provinceQueryDTO.getProvince().getBestProfessional());
-        List<SchoolMajor> majorList = schoolMapper.selectBestMajor(bestProfessional.getSchoolId(), provinceQueryDTO.getProvince().getName());
-        // 1.1封装专业列表
-        bestProfessional.setMajors(majorList);
-        // 2.再查询其他学校
-        List<SchoolSceneryVO> schoolSceneryVOList = schoolMapper.selectProfessionalByProvince(provinceQueryDTO.getProvince().getName());
-        schoolSceneryVOList.add(bestProfessional);
-        // 3.处理数据
-        trimData(schoolSceneryVOList);
-        return schoolSceneryVOList;
+        List<SchoolSceneryVO> list = schoolMapper.selectHotInProvince(provinceQueryDTO.getProvince().getName(), "专科");
+        trimData(list);
+        return list;
     }
 
     /**
-     * 获取外省热门本科院校
+     * 获取外省热门本科院校（按分数取前12）
      *
      * @param provinceQueryDTO 省份查询DTO
      * @return List<SchoolSceneryVO>
      */
     @Override
     public List<SchoolSceneryVO> getSchool3(ProvinceQueryDTO provinceQueryDTO) {
-        // 1.先精确查询到外省最好的本科
-        SchoolSceneryVO bestSchool = schoolMapper.selectOtherProvinceSchool(provinceQueryDTO.getProvince().getBestSchool());
-        List<SchoolMajor> majorList = schoolMapper.selectBestMajor(bestSchool.getSchoolId(), provinceQueryDTO.getProvince().getName());
-        // 1.1封装专业列表
-        bestSchool.setMajors(majorList);
-        // 2.再查询其他学校
-        List<SchoolSceneryVO> schoolSceneryVOList = schoolMapper.selectWithoutProvince(provinceQueryDTO.getProvince().getName(), bestSchool.getSchoolName());
-        schoolSceneryVOList.add(bestSchool);
-        // 3.处理数据
-        trimData(schoolSceneryVOList);
-        return schoolSceneryVOList;
+        List<SchoolSceneryVO> list = schoolMapper.selectHotOutProvince(provinceQueryDTO.getProvince().getName(), "本科");
+        trimData(list);
+        return list;
     }
 
     /**
-     * 获取外省热门专科院校
+     * 获取外省热门专科院校（按分数取前12）
      *
      * @param provinceQueryDTO 省份查询DTO
      * @return List<SchoolSceneryVO>
      */
     @Override
     public List<SchoolSceneryVO> getSchool4(ProvinceQueryDTO provinceQueryDTO) {
-        // 1.先精确查询到外省最好的专科
-        SchoolSceneryVO bestProfessional = schoolMapper.selectOtherProvinceProfessional(provinceQueryDTO.getProvince().getBestProfessional());
-        List<SchoolMajor> majorList = schoolMapper.selectBestMajor(bestProfessional.getSchoolId(), provinceQueryDTO.getProvince().getName());
-        // 1.1封装专业列表
-        bestProfessional.setMajors(majorList);
-        // 2.再查询其他学校
-        List<SchoolSceneryVO> schoolSceneryVOList = schoolMapper.selectWithoutProvinceProfessional(provinceQueryDTO.getProvince().getName(), bestProfessional.getSchoolName());
-        schoolSceneryVOList.add(bestProfessional);
-        // 3.处理数据
-        trimData(schoolSceneryVOList);
-        return schoolSceneryVOList;
+        List<SchoolSceneryVO> list = schoolMapper.selectHotOutProvince(provinceQueryDTO.getProvince().getName(), "专科");
+        trimData(list);
+        return list;
     }
 
     /**
@@ -830,7 +819,8 @@ public class SchoolServiceImpl implements SchoolService {
      */
     @Override
     public List<School> getHotRank() {
-        return SchoolConstant.getHotRank();
+        // 改为查库：补齐评分/省份/标签字段（原硬编码常量只有 id/头像/校名）
+        return schoolMapper.selectHotRank();
     }
 
     /**

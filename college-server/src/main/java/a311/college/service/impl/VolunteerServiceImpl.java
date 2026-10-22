@@ -74,8 +74,8 @@ public class VolunteerServiceImpl implements VolunteerService {
         // 第三步：只查这几所学校的完整数据（IN 查询，数据量极小）
         List<SchoolVolunteer> schoolVolunteerList = volunteerMapper.selectVolunteersBySchoolIds(schoolIds, volunteerPageDTO);
 
-        int userRanking = volunteerPageDTO.getRanking();
-        int userGrade = volunteerPageDTO.getGrade();
+        int userRanking = volunteerPageDTO.getRanking() != null ? volunteerPageDTO.getRanking() : 0;
+        int userGrade = volunteerPageDTO.getGrade() != null ? volunteerPageDTO.getGrade() : 0;
         Integer schoolType = volunteerPageDTO.getSchoolType();
         Set<Integer> addedMajorIds = null;
         if (volunteerPageDTO.getTableId() != null) {

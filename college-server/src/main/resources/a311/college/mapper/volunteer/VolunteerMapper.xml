@@ -14,8 +14,16 @@
 
     <sql id="scoreRangeCondition">
         p.province_name = #{dto.province}
-        <if test="dto.firstChoice != null">
-            AND sc.first_choice = #{dto.firstChoice}
+        <if test="dto.firstChoice != null and dto.firstChoice != ''">
+            <!-- 选科匹配：first_choice 为空/不限视为不限（老高考数据无专业级选科）；
+                 科类映射：物理→物理类/理科/综合（3+1+2、老高考、3+3 三种模式），历史→历史类/文科/综合 -->
+            AND (sc.first_choice = #{dto.firstChoice} OR sc.first_choice IS NULL OR sc.first_choice = '不限')
+            <if test='dto.firstChoice == "物理"'>
+                AND c.category_name IN ('物理类', '理科', '综合')
+            </if>
+            <if test='dto.firstChoice == "历史"'>
+                AND c.category_name IN ('历史类', '文科', '综合')
+            </if>
         </if>
         <choose>
             <when test="dto.schoolType == 0">
